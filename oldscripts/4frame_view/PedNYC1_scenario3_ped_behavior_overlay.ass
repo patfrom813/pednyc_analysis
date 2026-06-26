@@ -1,0 +1,20 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: BehaviorStyle,Arial,42,&H00FFFFFF,&H000000FF,&H00000000,&HAA000000,1,0,0,0,100,100,0,0,3,2,0,7,25,25,25,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:03.09,BehaviorStyle,,0,0,0,,Ped behavior: stopped\NConfidence: high
+Dialogue: 0,0:00:03.09,0:00:03.84,BehaviorStyle,,0,0,0,,Ped behavior: transition\NConfidence: low
+Dialogue: 0,0:00:03.84,0:00:08.68,BehaviorStyle,,0,0,0,,Ped behavior: stopped\NConfidence: high
+Dialogue: 0,0:00:08.68,0:00:17.99,BehaviorStyle,,0,0,0,,Ped behavior: walking\NConfidence: high
+Dialogue: 0,0:00:17.99,0:00:18.55,BehaviorStyle,,0,0,0,,Ped behavior: hesitating\NConfidence: low
+Dialogue: 0,0:00:18.55,0:00:23.49,BehaviorStyle,,0,0,0,,Ped behavior: walking\NConfidence: high
+Dialogue: 0,0:00:23.49,0:00:26.20,BehaviorStyle,,0,0,0,,Ped behavior: transition\NConfidence: low
+Dialogue: 0,0:00:26.20,0:00:27.36,BehaviorStyle,,0,0,0,,Ped behavior: walking\NConfidence: high
+Dialogue: 0,0:00:27.36,0:00:31.05,BehaviorStyle,,0,0,0,,Ped behavior: stopped\NConfidence: high

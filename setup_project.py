@@ -7,8 +7,12 @@ folders = [
     # Source code
     "src",
 
-    # Data
-    "data",
+    # Data pipeline
+    "data/raw",
+    "data/interim",
+    "data/processed",
+    "data/features",
+    "data/preprocess",
 
     # Output
     "outputs",
