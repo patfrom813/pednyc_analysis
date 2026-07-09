@@ -1,0 +1,7 @@
+event_group,definition,color
+near_stationary,Mean VR-derived pedestrian speed is very low.,#4E79A7
+speed_increasing,Pedestrian speed rises across the micro-segment.,#59A14F
+speed_decreasing,Pedestrian speed falls across the micro-segment.,#E15759
+head_active,Head turn rate or head/body yaw difference is elevated.,#EDC948
+speed_steady,Pedestrian speed is relatively stable.,#76B7B2
+mixed_motion,No single measured pattern dominates.,#9C755F
