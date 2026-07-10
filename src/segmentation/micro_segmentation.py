@@ -39,44 +39,76 @@ CAR_SPEED_COLS = ["car_speed_xz_smooth", "car_speed_xz"]
 CAR_ACCEL_COLS = ["car_accel_xz_smooth", "car_accel_xz"]
 AVATAR_GAP_COLS = ["avatar_vr_gap_xz"]
 
-# Change-point detection settings. The percentile is computed inside each
-# macro segment, so short/slow and long/active macro intervals get their own
-# local sensitivity. These are descriptive segmentation settings, not behavior
-# classification thresholds.
-CHANGE_WEIGHTS = {
-    "speed_delta": 1.0,
-    "accel_delta": 1.5,
-    "head_turn_delta": 1.0,
+# Change-point detection settings. These are intentionally easy to tune.
+# Boundary detection runs on residuals after subtracting a local robust trend,
+# so small micro-behaviors are not drowned out by the larger macro movement.
+TREND_WINDOW_SECONDS = 1.00
+LOCAL_NORMALIZATION_SECONDS = 1.50
+CHANGE_SCORE_SMOOTH_SECONDS = 0.12
+CHANGE_LAG_SECONDS = [0.0, 0.17, 0.50]
+CHANGE_LAG_WEIGHTS = [1.0, 1.0, 1.5]
+CHANGE_SIGNAL_WEIGHTS = {
+    "speed": 1.0,
+    "accel": 2.0,
+    "head_turn": 1.0,
 }
-CHANGE_SCORE_PERCENTILE = 75
-CHANGE_SCORE_SMOOTH_SECONDS = 0.20
-MIN_BOUNDARY_GAP_SECONDS = 0.30
-MIN_MICRO_SEGMENT_SECONDS = 0.40
+CHANGE_SCORE_PERCENTILE = 50
+PEAK_PROMINENCE_FRACTION = 0.35
+MIN_BOUNDARY_GAP_SECONDS = 0.15
+MIN_MICRO_SEGMENT_SECONDS = 0.25
+MAX_MICRO_SEGMENT_SECONDS = 2.50
 
-# Descriptive event groups. These are not final behavior labels; they are
+# Explicit raw-signal detectors. These add boundaries for short hesitations and
+# pauses that a statistical score can miss.
+HESITATION_DROP_MIN_MPS = 0.18
+HESITATION_DROP_FRACTION = 0.22
+HESITATION_RECOVERY_FRACTION = 0.35
+HESITATION_MIN_SECONDS = 0.15
+HESITATION_MAX_SECONDS = 1.50
+PAUSE_SPEED_MAX_MPS = 0.10
+PAUSE_MIN_SECONDS = 0.12
+
+# Descriptive event primitives. These are not final intent labels; they are
 # shorthand for measured properties so manual review can interpret the segment.
 GROUP_DEFINITIONS = {
-    "near_stationary": "Mean VR-derived pedestrian speed is very low.",
-    "speed_increasing": "Pedestrian speed rises across the micro-segment.",
-    "speed_decreasing": "Pedestrian speed falls across the micro-segment.",
+    "near_stationary": "Mean VR-derived pedestrian speed is below 0.15 m/s or the segment contains near-zero speed.",
+    "pausing": "VR-derived speed stays below 0.10 m/s for at least 0.12 seconds.",
+    "hesitating": "Speed shows a short measured dip: drop >0.18 m/s and >22%, with partial recovery within 1.5 seconds.",
+    "speed_increasing": "Pedestrian speed slope is positive enough to indicate rising speed.",
+    "speed_decreasing": "Pedestrian speed slope is negative enough to indicate falling speed.",
+    "speed_steady": "Speed coefficient of variation is low while mean speed is above walking threshold.",
+    "fluctuating": "Speed coefficient of variation is elevated without a clear increasing/decreasing slope.",
+    "head_checking": "Head turn spike is brief and exceeds 120 deg/s.",
     "head_active": "Head turn rate or head/body yaw difference is elevated.",
-    "speed_steady": "Pedestrian speed is relatively stable.",
-    "mixed_motion": "No single measured pattern dominates.",
+    "yielding": "Near-car context with measured slowing, pausing, or hesitation.",
+    "proceeding": "Near-car context with measured steady or increasing movement.",
+    "mixed_motion": "No single measured primitive dominates.",
 }
 GROUP_COLORS = {
     "near_stationary": "#4E79A7",
+    "pausing": "#A0CBE8",
+    "hesitating": "#F28E2B",
     "speed_increasing": "#59A14F",
     "speed_decreasing": "#E15759",
+    "fluctuating": "#B07AA1",
     "head_active": "#EDC948",
+    "head_checking": "#FFBE7D",
     "speed_steady": "#76B7B2",
+    "yielding": "#D37295",
+    "proceeding": "#8CD17D",
     "mixed_motion": "#9C755F",
 }
 NEAR_STATIONARY_SPEED = 0.15
-SPEED_CHANGE_MIN = 0.20
-SPEED_SLOPE_MIN = 0.08
-STEADY_SPEED_STD_MAX = 0.12
-HEAD_ACTIVE_TURN_RATE = 60.0
+WALKING_MEAN_SPEED = 0.25
+SPEED_SLOPE_MIN = 0.12
+STEADY_SPEED_CV_MAX = 0.22
+FLUCTUATING_SPEED_CV_MIN = 0.22
+HEAD_CHECK_TURN_RATE = 120.0
+HEAD_CHECK_MAX_SECONDS = 0.50
+HEAD_ACTIVE_MEAN_TURN_RATE = 25.0
+HEAD_ACTIVE_TURN_RATE = 50.0
 HEAD_ACTIVE_YAW_DIFF = 20.0
+NEAR_CAR_DISTANCE_METERS = 12.0
 
 
 def parse_args():
@@ -188,24 +220,78 @@ def linear_slope(time_sec, values):
     return float(np.polyfit(x, y[mask], 1)[0])
 
 
-def normalized_delta(values):
+def fill_numeric(values):
     arr = np.asarray(values, dtype=float)
-    filled = pd.Series(arr).interpolate(limit_direction="both").to_numpy(dtype=float)
-    delta = np.abs(np.diff(filled, prepend=filled[0]))
-    scale = float(np.nanstd(filled))
-    if not np.isfinite(scale) or scale < 1e-9:
-        scale = 1.0
-    return delta / scale
+    return pd.Series(arr).interpolate(limit_direction="both").ffill().bfill().fillna(0.0).to_numpy(dtype=float)
 
 
-def local_peak_indices(values, threshold):
+def robust_trend(values, time_sec):
+    arr = fill_numeric(values)
+    trend_window = seconds_to_frames(time_sec, TREND_WINDOW_SECONDS)
+    if trend_window % 2 == 0:
+        trend_window += 1
+    median = (
+        pd.Series(arr)
+        .rolling(window=max(3, trend_window), center=True, min_periods=1)
+        .median()
+        .to_numpy(dtype=float)
+    )
+    mean_window = max(1, seconds_to_frames(time_sec, CHANGE_SCORE_SMOOTH_SECONDS))
+    return rolling_mean(median, mean_window)
+
+
+def residual_signal(values, time_sec):
+    arr = fill_numeric(values)
+    trend = robust_trend(arr, time_sec)
+    return arr - trend, trend
+
+
+def multi_lag_delta(values, time_sec):
+    arr = fill_numeric(values)
+    combined = np.zeros(len(arr), dtype=float)
+    for lag_seconds, lag_weight in zip(CHANGE_LAG_SECONDS, CHANGE_LAG_WEIGHTS):
+        lag = 1 if lag_seconds <= 0 else seconds_to_frames(time_sec, lag_seconds)
+        lag = max(1, min(lag, max(1, len(arr) - 1)))
+        delta = np.zeros(len(arr), dtype=float)
+        delta[lag:] = np.abs(arr[lag:] - arr[:-lag])
+        delta[:lag] = delta[lag] if len(arr) > lag else 0.0
+        scale = float(np.nanstd(delta))
+        if not np.isfinite(scale) or scale < 1e-9:
+            scale = 1.0
+        combined += lag_weight * (delta / scale)
+    return combined
+
+
+def rolling_local_zscore(values, time_sec):
+    arr = fill_numeric(values)
+    window = max(3, seconds_to_frames(time_sec, LOCAL_NORMALIZATION_SECONDS))
+    local_mean = pd.Series(arr).rolling(window=window, center=True, min_periods=1).mean().to_numpy(dtype=float)
+    local_std = pd.Series(arr).rolling(window=window, center=True, min_periods=2).std(ddof=0).to_numpy(dtype=float).copy()
+    fallback = float(np.nanstd(arr))
+    if not np.isfinite(fallback) or fallback < 1e-9:
+        fallback = 1.0
+    local_std[~np.isfinite(local_std) | (local_std < 1e-9)] = fallback
+    z = (arr - local_mean) / local_std
+    return np.maximum(z, 0.0)
+
+
+def local_peak_indices(values, threshold, min_distance_frames=1, prominence_min=0.0):
     values = np.asarray(values, dtype=float)
     peaks = []
     if len(values) < 3:
         return peaks
     for i in range(1, len(values) - 1):
         if values[i] >= threshold and values[i] >= values[i - 1] and values[i] >= values[i + 1]:
-            peaks.append(i)
+            local_floor = max(values[i - 1], values[i + 1])
+            if values[i] - local_floor >= prominence_min:
+                peaks.append(i)
+    if not peaks or min_distance_frames <= 1:
+        return peaks
+    kept = []
+    for peak in sorted(peaks, key=lambda idx: values[idx], reverse=True):
+        if all(abs(peak - other) >= min_distance_frames for other in kept):
+            kept.append(peak)
+    return sorted(kept)
     return peaks
 
 
@@ -222,6 +308,25 @@ def merge_close_boundaries(boundaries, time_sec, scores):
         else:
             merged.append(boundary)
     return merged
+
+
+def split_long_intervals(boundaries, time_sec):
+    changed = True
+    boundaries = sorted(set(int(b) for b in boundaries))
+    while changed:
+        changed = False
+        expanded = [boundaries[0]]
+        for left, right in zip(boundaries[:-1], boundaries[1:]):
+            duration = time_sec[right] - time_sec[left]
+            if duration > MAX_MICRO_SEGMENT_SECONDS:
+                midpoint_time = time_sec[left] + duration / 2.0
+                midpoint = int(np.argmin(np.abs(time_sec - midpoint_time)))
+                if left < midpoint < right:
+                    expanded.append(midpoint)
+                    changed = True
+            expanded.append(right)
+        boundaries = sorted(set(expanded))
+    return boundaries
 
 
 def macro_row_to_indices(macro_row, df):
@@ -245,30 +350,127 @@ def compute_change_score(seg):
     accel_col = pick_col(seg, PED_ACCEL_COLS)
     head_col = pick_col(seg, HEAD_TURN_COLS)
 
-    speed_score = normalized_delta(numeric_series(seg, speed_col))
-    accel_score = normalized_delta(numeric_series(seg, accel_col, default=0.0))
-    head_score = normalized_delta(numeric_series(seg, head_col, default=0.0))
+    speed_residual, speed_trend = residual_signal(numeric_series(seg, speed_col), time_sec)
+    accel_residual, accel_trend = residual_signal(numeric_series(seg, accel_col, default=0.0), time_sec)
+    head_residual, head_trend = residual_signal(numeric_series(seg, head_col, default=0.0), time_sec)
 
-    score = (
-        CHANGE_WEIGHTS["speed_delta"] * speed_score
-        + CHANGE_WEIGHTS["accel_delta"] * accel_score
-        + CHANGE_WEIGHTS["head_turn_delta"] * head_score
+    speed_score = multi_lag_delta(speed_residual, time_sec)
+    accel_score = multi_lag_delta(accel_residual, time_sec)
+    head_score = multi_lag_delta(head_residual, time_sec)
+
+    raw_score = (
+        CHANGE_SIGNAL_WEIGHTS["speed"] * speed_score
+        + CHANGE_SIGNAL_WEIGHTS["accel"] * accel_score
+        + CHANGE_SIGNAL_WEIGHTS["head_turn"] * head_score
     )
     window = seconds_to_frames(time_sec, CHANGE_SCORE_SMOOTH_SECONDS)
-    return rolling_mean(score, window)
+    smooth_score = rolling_mean(raw_score, window)
+    score = rolling_local_zscore(smooth_score, time_sec)
+    diagnostics = {
+        "speed_trend": speed_trend,
+        "speed_residual": speed_residual,
+        "accel_trend": accel_trend,
+        "accel_residual": accel_residual,
+        "head_turn_trend": head_trend,
+        "head_turn_residual": head_residual,
+        "change_score_raw": raw_score,
+    }
+    return score, diagnostics
+
+
+def add_boundary_source(sources, idx, source):
+    idx = int(idx)
+    sources.setdefault(idx, set()).add(source)
+
+
+def detect_pause_boundaries(speed, time_sec):
+    speed = fill_numeric(speed)
+    is_pause = speed < PAUSE_SPEED_MAX_MPS
+    boundaries = []
+    start = None
+    for i, active in enumerate(is_pause):
+        if active and start is None:
+            start = i
+        if start is not None and (not active or i == len(is_pause) - 1):
+            end = i if active and i == len(is_pause) - 1 else i - 1
+            duration = time_sec[end] - time_sec[start] if end > start else 0.0
+            if duration >= PAUSE_MIN_SECONDS:
+                boundaries.extend([start, end])
+            start = None
+    return boundaries
+
+
+def detect_hesitation_boundaries(speed, time_sec):
+    speed = fill_numeric(speed)
+    boundaries = []
+    if len(speed) < 5:
+        return boundaries
+    search_frames = max(2, seconds_to_frames(time_sec, HESITATION_MAX_SECONDS))
+    for i in range(1, len(speed) - 1):
+        if not (speed[i] <= speed[i - 1] and speed[i] <= speed[i + 1]):
+            continue
+        left_start = max(0, i - search_frames)
+        right_end = min(len(speed), i + search_frames + 1)
+        left_slice = speed[left_start:i + 1]
+        right_slice = speed[i:right_end]
+        if len(left_slice) < 2 or len(right_slice) < 2:
+            continue
+        left_peak_offset = int(np.nanargmax(left_slice))
+        left_peak_idx = left_start + left_peak_offset
+        right_peak_idx = i + int(np.nanargmax(right_slice))
+        pre_max = speed[left_peak_idx]
+        post_max = speed[right_peak_idx]
+        drop = pre_max - speed[i]
+        if pre_max <= 0 or drop < HESITATION_DROP_MIN_MPS or drop / pre_max < HESITATION_DROP_FRACTION:
+            continue
+        recovery = post_max - speed[i]
+        if recovery < HESITATION_RECOVERY_FRACTION * drop:
+            continue
+        half_level = speed[i] + drop / 2.0
+        low_indices = np.where(speed[left_peak_idx:right_peak_idx + 1] <= half_level)[0]
+        if len(low_indices):
+            half_start = left_peak_idx + int(low_indices[0])
+            half_end = left_peak_idx + int(low_indices[-1])
+        else:
+            half_start = left_peak_idx
+            half_end = right_peak_idx
+        duration = time_sec[half_end] - time_sec[half_start]
+        if HESITATION_MIN_SECONDS <= duration <= HESITATION_MAX_SECONDS:
+            boundaries.extend([left_peak_idx, i, right_peak_idx])
+    return boundaries
 
 
 def find_boundaries(seg):
     time_sec = seg["elapsed_time_sec"].to_numpy(dtype=float)
     if len(seg) < 3:
-        return [0, len(seg) - 1], np.zeros(len(seg), dtype=float)
+        return [0, len(seg) - 1], np.zeros(len(seg), dtype=float), {0: {"macro_start"}, len(seg) - 1: {"macro_end"}}, {}
 
-    score = compute_change_score(seg)
+    score, diagnostics = compute_change_score(seg)
     threshold = float(np.nanpercentile(score, CHANGE_SCORE_PERCENTILE))
-    candidates = local_peak_indices(score, threshold)
+    prominence_min = PEAK_PROMINENCE_FRACTION * float(np.nanmax(score)) if np.any(np.isfinite(score)) else 0.0
+    min_peak_gap = seconds_to_frames(time_sec, MIN_BOUNDARY_GAP_SECONDS)
+    candidates = local_peak_indices(score, threshold, min_peak_gap, prominence_min)
+    sources = {}
+    for idx in candidates:
+        add_boundary_source(sources, idx, "residual_multiscale_peak")
+
+    speed_col = pick_col(seg, PED_SPEED_COLS, required=True, purpose="pedestrian speed")
+    speed = numeric_series(seg, speed_col).to_numpy(dtype=float)
+    for idx in detect_pause_boundaries(speed, time_sec):
+        candidates.append(idx)
+        add_boundary_source(sources, idx, "pause_speed_run")
+    for idx in detect_hesitation_boundaries(speed, time_sec):
+        candidates.append(idx)
+        add_boundary_source(sources, idx, "hesitation_speed_dip")
+
     candidates = merge_close_boundaries(candidates, time_sec, score)
     boundaries = [0] + [c for c in candidates if 0 < c < len(seg) - 1] + [len(seg) - 1]
-    return sorted(set(boundaries)), score
+    boundaries = split_long_intervals(sorted(set(boundaries)), time_sec)
+    add_boundary_source(sources, 0, "macro_start")
+    add_boundary_source(sources, len(seg) - 1, "macro_end")
+    for idx in boundaries:
+        sources.setdefault(int(idx), {"long_segment_split"})
+    return boundaries, score, sources, diagnostics
 
 
 def displacement_stats(seg):
@@ -289,27 +491,123 @@ def displacement_stats(seg):
     return displacement, path_length, progress_ratio
 
 
-def classify_event_group(features):
-    if features["speed_mean"] < NEAR_STATIONARY_SPEED:
-        return "near_stationary"
+def zero_speed_duration(speed, time_sec):
+    speed = np.asarray(speed, dtype=float)
+    time_sec = np.asarray(time_sec, dtype=float)
+    if len(speed) < 2:
+        return 0.0
+    dt = np.diff(time_sec, prepend=time_sec[0])
+    if len(dt) > 1:
+        dt[0] = np.nanmedian(dt[1:])
+    dt[~np.isfinite(dt) | (dt < 0)] = 0.0
+    return float(np.nansum(dt[speed < PAUSE_SPEED_MAX_MPS]))
+
+
+def speed_drop_recovery(speed):
+    speed = fill_numeric(speed)
+    if len(speed) < 3:
+        return np.nan, np.nan
+    min_idx = int(np.nanargmin(speed))
+    pre_max = float(np.nanmax(speed[:min_idx + 1])) if min_idx > 0 else float(speed[min_idx])
+    post_max = float(np.nanmax(speed[min_idx:])) if min_idx < len(speed) - 1 else float(speed[min_idx])
+    drop = pre_max - float(speed[min_idx])
+    recovery = post_max - float(speed[min_idx])
+    return drop, recovery
+
+
+def classify_event_groups(features):
+    groups = []
+
+    # Motion primitives are direct measurements from VR-derived pedestrian speed.
+    if features["speed_mean"] < NEAR_STATIONARY_SPEED or features["speed_min"] < 0.05:
+        groups.append("near_stationary")
+    if features["zero_velocity_duration_sec"] >= PAUSE_MIN_SECONDS:
+        groups.append("pausing")
     if (
-        features["head_turn_rate_max_abs"] >= HEAD_ACTIVE_TURN_RATE
+        features["speed_drop"] >= HESITATION_DROP_MIN_MPS
+        and features["duration_sec"] <= HESITATION_MAX_SECONDS
+        and features["speed_mean"] > WALKING_MEAN_SPEED
+        and features["speed_recovery"] >= HESITATION_RECOVERY_FRACTION * features["speed_drop"]
+    ):
+        groups.append("hesitating")
+    if features["speed_slope"] > SPEED_SLOPE_MIN and features["speed_mean"] > WALKING_MEAN_SPEED:
+        groups.append("speed_increasing")
+    if features["speed_slope"] < -SPEED_SLOPE_MIN and features["speed_mean"] > WALKING_MEAN_SPEED:
+        groups.append("speed_decreasing")
+    if features["speed_cv"] < STEADY_SPEED_CV_MAX and features["speed_mean"] > WALKING_MEAN_SPEED:
+        groups.append("speed_steady")
+    if (
+        features["speed_cv"] > FLUCTUATING_SPEED_CV_MIN
+        and features["speed_mean"] > WALKING_MEAN_SPEED
+        and "speed_increasing" not in groups
+        and "speed_decreasing" not in groups
+    ):
+        groups.append("fluctuating")
+
+    # Head primitives describe observed head motion; they are not intent labels.
+    if features["head_turn_rate_max_abs"] >= HEAD_CHECK_TURN_RATE and features["duration_sec"] <= HEAD_CHECK_MAX_SECONDS:
+        groups.append("head_checking")
+    if (
+        features["head_turn_rate_mean_abs"] >= HEAD_ACTIVE_MEAN_TURN_RATE
+        or features["head_turn_rate_max_abs"] >= HEAD_ACTIVE_TURN_RATE
         or features["head_body_yaw_diff_max_abs"] >= HEAD_ACTIVE_YAW_DIFF
     ):
-        return "head_active"
-    if features["speed_delta"] >= SPEED_CHANGE_MIN or features["speed_slope"] >= SPEED_SLOPE_MIN:
-        return "speed_increasing"
-    if features["speed_delta"] <= -SPEED_CHANGE_MIN or features["speed_slope"] <= -SPEED_SLOPE_MIN:
-        return "speed_decreasing"
-    if features["speed_std"] <= STEADY_SPEED_STD_MAX:
-        return "speed_steady"
-    return "mixed_motion"
+        groups.append("head_active")
+
+    # Car context is added only when the pedestrian is within the near-car range.
+    near_car = np.isfinite(features["distance_min"]) and features["distance_min"] < NEAR_CAR_DISTANCE_METERS
+    if near_car and any(group in groups for group in ["speed_decreasing", "pausing", "hesitating", "near_stationary"]):
+        groups.append("yielding")
+    if near_car and "yielding" not in groups and any(group in groups for group in ["speed_increasing", "speed_steady"]):
+        groups.append("proceeding")
+
+    if not groups:
+        groups.append("mixed_motion")
+    return groups
+
+
+def event_group_definition(event_group):
+    return " + ".join(GROUP_DEFINITIONS.get(group, group) for group in event_group.split("+"))
+
+
+def color_for_group(event_group):
+    first = str(event_group).split("+")[0]
+    return GROUP_COLORS.get(first, GROUP_COLORS["mixed_motion"])
+
+
+def explain_groups(features, groups):
+    evidence = []
+    for group in groups:
+        if group == "near_stationary":
+            evidence.append(f"mean speed {features['speed_mean']:.2f} m/s; min {features['speed_min']:.2f} m/s")
+        elif group == "pausing":
+            evidence.append(f"speed < {PAUSE_SPEED_MAX_MPS:.2f} m/s for {features['zero_velocity_duration_sec']:.2f} s")
+        elif group == "hesitating":
+            evidence.append(f"speed drop {features['speed_drop']:.2f} m/s with recovery {features['speed_recovery']:.2f} m/s")
+        elif group == "speed_increasing":
+            evidence.append(f"speed slope {features['speed_slope']:.2f} m/s/s")
+        elif group == "speed_decreasing":
+            evidence.append(f"speed slope {features['speed_slope']:.2f} m/s/s")
+        elif group == "speed_steady":
+            evidence.append(f"speed CV {features['speed_cv']:.2f}")
+        elif group == "fluctuating":
+            evidence.append(f"speed CV {features['speed_cv']:.2f}")
+        elif group == "head_checking":
+            evidence.append(f"brief head turn max {features['head_turn_rate_max_abs']:.1f} deg/s")
+        elif group == "head_active":
+            evidence.append(f"head turn mean {features['head_turn_rate_mean_abs']:.1f}, max {features['head_turn_rate_max_abs']:.1f} deg/s")
+        elif group == "yielding":
+            evidence.append(f"near-car slowing context; min distance {features['distance_min']:.2f} m")
+        elif group == "proceeding":
+            evidence.append(f"near-car movement context; min distance {features['distance_min']:.2f} m")
+    return "; ".join(evidence)
 
 
 def describe_segment(features):
     parts = [
         f"speed {features['speed_start']:.2f}->{features['speed_end']:.2f} m/s",
-        f"mean {features['speed_mean']:.2f} m/s",
+        f"mean {features['speed_mean']:.2f}, cv {features['speed_cv']:.2f}",
+        f"accel min/max {features['accel_min']:.2f}/{features['accel_max']:.2f}",
     ]
     if np.isfinite(features["distance_start"]) and np.isfinite(features["distance_end"]):
         parts.append(f"distance {features['distance_start']:.2f}->{features['distance_end']:.2f} m")
@@ -369,7 +667,8 @@ def extract_features(global_df, macro_row, micro_id, local_start, local_end, loc
         "accel_std": safe_stat(accel, np.nanstd),
         "accel_min": safe_stat(accel, np.nanmin),
         "accel_max": safe_stat(accel, np.nanmax),
-        "head_turn_rate_mean": safe_stat(np.abs(head_turn), np.nanmean),
+        "accel_jerk_abs_mean": safe_stat(np.abs(np.diff(fill_numeric(accel))), np.nanmean),
+        "head_turn_rate_mean_abs": safe_stat(np.abs(head_turn), np.nanmean),
         "head_turn_rate_max_abs": safe_stat(np.abs(head_turn), np.nanmax),
         "head_body_yaw_diff_mean_abs": safe_stat(np.abs(head_body), np.nanmean),
         "head_body_yaw_diff_max_abs": safe_stat(np.abs(head_body), np.nanmax),
@@ -388,11 +687,20 @@ def extract_features(global_df, macro_row, micro_id, local_start, local_end, loc
         "progress_ratio": progress_ratio,
     }
     features["speed_delta"] = features["speed_end"] - features["speed_start"]
+    features["speed_cv"] = features["speed_std"] / features["speed_mean"] if features["speed_mean"] > 1e-9 else np.nan
+    features["speed_drop"], features["speed_recovery"] = speed_drop_recovery(speed)
+    features["zero_velocity_duration_sec"] = zero_speed_duration(speed, time_sec)
     features["distance_delta"] = features["distance_end"] - features["distance_start"]
-    features["event_group"] = classify_event_group(features)
-    features["event_group_definition"] = GROUP_DEFINITIONS[features["event_group"]]
+    groups = classify_event_groups(features)
+    features["event_group"] = "+".join(groups)
+    features["event_group_definition"] = event_group_definition(features["event_group"])
+    features["event_primitives"] = "|".join(groups)
+    features["primary_evidence"] = explain_groups(features, groups)
+    features["supporting_evidence"] = describe_segment(features)
+    features["columns_used"] = "ped_speed_xz_smooth|ped_accel_xz_smooth|head_turn_rate|head_body_yaw_diff|car_ped_distance_xz_smooth|distance_closing_smooth|car_speed_xz_smooth|car_accel_xz_smooth|avatar_vr_gap_xz"
+    features["notes"] = "Compound labels are descriptive measurements; avatar_vr_gap_xz is audit-only and not used for movement boundaries."
     features["plain_description"] = describe_segment(features)
-    features["signals_used_for_boundaries"] = "ped_speed_xz_smooth|ped_accel_xz_smooth|head_turn_rate"
+    features["signals_used_for_boundaries"] = "residual ped_speed_xz_smooth|residual ped_accel_xz_smooth|residual head_turn_rate|raw speed pause/hesitation detectors"
     return features
 
 
@@ -401,8 +709,18 @@ def build_micro_segments(features_df, macro_df):
     frame_df = features_df.copy()
     frame_df["micro_segment_id"] = -1
     frame_df["micro_event_group"] = "unassigned"
+    frame_df["micro_event_primitives"] = ""
     frame_df["macro_segment_id"] = -1
     frame_df["change_score"] = np.nan
+    frame_df["change_score_raw"] = np.nan
+    frame_df["ped_speed_trend"] = np.nan
+    frame_df["ped_speed_residual"] = np.nan
+    frame_df["ped_accel_trend"] = np.nan
+    frame_df["ped_accel_residual"] = np.nan
+    frame_df["head_turn_trend"] = np.nan
+    frame_df["head_turn_residual"] = np.nan
+    for group in GROUP_DEFINITIONS:
+        frame_df[f"is_{group}"] = False
 
     next_micro_id = 0
     boundary_records = []
@@ -410,8 +728,19 @@ def build_micro_segments(features_df, macro_df):
     for _, macro_row in macro_df.iterrows():
         start_idx, end_idx = macro_row_to_indices(macro_row, frame_df)
         macro_seg = frame_df.iloc[start_idx:end_idx + 1].copy()
-        boundaries, score = find_boundaries(macro_seg)
+        boundaries, score, boundary_sources, diagnostics = find_boundaries(macro_seg)
         frame_df.loc[macro_seg.index, "change_score"] = score
+        for diag_col, values in diagnostics.items():
+            target_col = diag_col
+            if diag_col == "speed_trend":
+                target_col = "ped_speed_trend"
+            elif diag_col == "speed_residual":
+                target_col = "ped_speed_residual"
+            elif diag_col == "accel_trend":
+                target_col = "ped_accel_trend"
+            elif diag_col == "accel_residual":
+                target_col = "ped_accel_residual"
+            frame_df.loc[macro_seg.index, target_col] = values
         frame_df.loc[start_idx:end_idx, "macro_segment_id"] = int(macro_row["segment_id"])
 
         for boundary in boundaries:
@@ -420,6 +749,7 @@ def build_micro_segments(features_df, macro_df):
                 "boundary_idx": int(macro_seg.index[boundary]),
                 "boundary_time_sec": float(macro_seg["elapsed_time_sec"].iloc[boundary]),
                 "change_score": float(score[boundary]) if len(score) else np.nan,
+                "boundary_source": "|".join(sorted(boundary_sources.get(int(boundary), {"unknown"}))),
             })
 
         for left, right in zip(boundaries[:-1], boundaries[1:]):
@@ -429,6 +759,10 @@ def build_micro_segments(features_df, macro_df):
             rows.append(features)
             frame_df.loc[features["start_idx"]:features["end_idx"], "micro_segment_id"] = next_micro_id
             frame_df.loc[features["start_idx"]:features["end_idx"], "micro_event_group"] = features["event_group"]
+            frame_df.loc[features["start_idx"]:features["end_idx"], "micro_event_primitives"] = features["event_primitives"]
+            for group in features["event_primitives"].split("|"):
+                if group:
+                    frame_df.loc[features["start_idx"]:features["end_idx"], f"is_{group}"] = True
             next_micro_id += 1
 
     return pd.DataFrame(rows), frame_df, pd.DataFrame(boundary_records)
@@ -482,7 +816,7 @@ def shade_macro_segments(ax, macro_df, label_top=False):
             ax.text(
                 (row["time_start_sec"] + row["time_end_sec"]) / 2,
                 0.98,
-                f"macro {int(row['segment_id'])}",
+                f"M{int(row['segment_id'])}",
                 transform=ax.get_xaxis_transform(),
                 ha="center",
                 va="top",
@@ -496,6 +830,19 @@ def shade_macro_segments(ax, macro_df, label_top=False):
 def draw_boundaries(ax, boundary_df):
     for t in boundary_df["boundary_time_sec"].dropna().unique():
         ax.axvline(float(t), color="#AA3377", linewidth=0.7, alpha=0.45, zorder=2)
+
+
+def wrapped_group_label(event_group):
+    return str(event_group).replace("+", "+\n")
+
+
+def scenario_time_limits(macro_df, frame_df=None):
+    max_time = np.nan
+    if macro_df is not None and len(macro_df):
+        max_time = float(np.nanmax(macro_df["time_end_sec"]))
+    if (not np.isfinite(max_time)) and frame_df is not None and "elapsed_time_sec" in frame_df.columns:
+        max_time = float(np.nanmax(frame_df["elapsed_time_sec"]))
+    return 0.0, max_time if np.isfinite(max_time) else 1.0
 
 
 def plot_standard_three_panel(frame_df, macro_df, boundary_df, output_path):
@@ -518,6 +865,7 @@ def plot_standard_three_panel(frame_df, macro_df, boundary_df, output_path):
         ax.set_title(title, loc="left", fontsize=10)
         ax.set_ylabel(ylabel)
         ax.grid(True, alpha=0.25)
+        ax.set_xlim(*scenario_time_limits(macro_df, frame_df))
     axes[-1].set_xlabel("Scenario elapsed time, seconds")
     fig.suptitle("Micro-Segmentation Change Boundaries: Core Signals", fontsize=14)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
@@ -539,7 +887,7 @@ def plot_stacked_comparison(frame_df, macro_df, segments_df, boundary_df, output
         ("Distance closing/change", pick_col(frame_df, CLOSING_COLS) or pick_col(frame_df, DISTANCE_CHANGE_COLS), "value"),
         ("Car speed/accel", pick_col(frame_df, CAR_SPEED_COLS) or pick_col(frame_df, CAR_ACCEL_COLS), "value"),
     ]
-    fig, axes = plt.subplots(7, 1, figsize=(18, 14), sharex=True, gridspec_kw={"height_ratios": [1, 1, 1, 1, 1, 1, 1.4]})
+    fig, axes = plt.subplots(7, 1, figsize=(22, 14), sharex=True, gridspec_kw={"height_ratios": [1, 1, 1, 1, 1, 1, 1.6]})
     for ax, (title, col, ylabel) in zip(axes[:6], panels):
         shade_macro_segments(ax, macro_df)
         draw_boundaries(ax, boundary_df)
@@ -551,10 +899,11 @@ def plot_stacked_comparison(frame_df, macro_df, segments_df, boundary_df, output
         ax.set_title(title, loc="left", fontsize=10)
         ax.set_ylabel(ylabel)
         ax.grid(True, alpha=0.25)
+        ax.set_xlim(*scenario_time_limits(macro_df, frame_df))
 
     ax = axes[-1]
     shade_macro_segments(ax, macro_df, label_top=True)
-    group_order = [group for group in GROUP_DEFINITIONS if group in set(segments_df["event_group"])]
+    group_order = sorted(segments_df["event_group"].dropna().unique().tolist())
     y_lookup = {group: i for i, group in enumerate(group_order)}
     for _, row in segments_df.iterrows():
         ax.barh(
@@ -562,19 +911,20 @@ def plot_stacked_comparison(frame_df, macro_df, segments_df, boundary_df, output
             row["duration_sec"],
             left=row["start_time_sec"],
             height=0.6,
-            color=GROUP_COLORS[row["event_group"]],
+            color=color_for_group(row["event_group"]),
             edgecolor="white",
             linewidth=0.8,
         )
     ax.set_yticks(range(len(group_order)))
-    ax.set_yticklabels(group_order, fontsize=8)
+    ax.set_yticklabels([wrapped_group_label(group) for group in group_order], fontsize=7)
     ax.set_title("Descriptive micro-segment groups", loc="left", fontsize=10)
     ax.set_xlabel("Scenario elapsed time, seconds")
     ax.grid(True, axis="x", alpha=0.25)
-    handles = [Patch(facecolor=GROUP_COLORS[group], label=f"{group}: {GROUP_DEFINITIONS[group]}") for group in group_order]
-    fig.legend(handles=handles, loc="center left", bbox_to_anchor=(1.005, 0.5), fontsize=8, frameon=False)
+    ax.set_xlim(*scenario_time_limits(macro_df, frame_df))
+    handles = [Patch(facecolor=GROUP_COLORS[group], label=group) for group in GROUP_DEFINITIONS]
+    fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 0.005), ncol=4, fontsize=8, frameon=False)
     fig.suptitle("Stacked Signal Comparison With Macro and Micro Segments", fontsize=14)
-    fig.tight_layout(rect=[0, 0, 0.78, 0.97])
+    fig.tight_layout(rect=[0, 0.06, 1, 0.97])
     fig.savefig(output_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
     return True
@@ -584,8 +934,8 @@ def plot_gantt(segments_df, macro_df, output_path):
     plt, Patch = load_matplotlib()
     if plt is None:
         return False
-    group_order = [group for group in GROUP_DEFINITIONS if group in set(segments_df["event_group"])]
-    fig, ax = plt.subplots(figsize=(18, max(6, 0.6 * len(group_order) + 3)))
+    group_order = sorted(segments_df["event_group"].dropna().unique().tolist())
+    fig, ax = plt.subplots(figsize=(22, max(8, 0.75 * len(group_order) + 3)))
     shade_macro_segments(ax, macro_df, label_top=True)
     y_lookup = {group: i for i, group in enumerate(group_order)}
     for _, row in segments_df.iterrows():
@@ -594,19 +944,20 @@ def plot_gantt(segments_df, macro_df, output_path):
             row["duration_sec"],
             left=row["start_time_sec"],
             height=0.62,
-            color=GROUP_COLORS[row["event_group"]],
+            color=color_for_group(row["event_group"]),
             edgecolor="white",
             linewidth=0.8,
         )
     ax.set_yticks(range(len(group_order)))
-    ax.set_yticklabels(group_order)
+    ax.set_yticklabels([wrapped_group_label(group) for group in group_order], fontsize=8)
     ax.set_xlabel("Scenario elapsed time, seconds")
     ax.set_ylabel("Descriptive event group")
     ax.set_title("Descriptive Micro-Segments by Event Group")
     ax.grid(True, axis="x", alpha=0.25)
-    handles = [Patch(facecolor=GROUP_COLORS[group], label=f"{group}: {GROUP_DEFINITIONS[group]}") for group in group_order]
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.01, 1.0), fontsize=8, frameon=False)
-    fig.tight_layout(rect=[0, 0, 0.78, 1])
+    ax.set_xlim(*scenario_time_limits(macro_df))
+    handles = [Patch(facecolor=GROUP_COLORS[group], label=group) for group in GROUP_DEFINITIONS]
+    ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.18), ncol=4, fontsize=8, frameon=False)
+    fig.tight_layout(rect=[0, 0.08, 1, 1])
     fig.savefig(output_path, dpi=240, bbox_inches="tight")
     plt.close(fig)
     return True
@@ -635,17 +986,25 @@ def main():
     segments_df, frame_df, boundary_df = build_micro_segments(features, macro_df)
     summary_df = summarize_segments(segments_df, macro_df)
     definitions_df = pd.DataFrame(
-        [{"event_group": key, "definition": value, "color": GROUP_COLORS[key]} for key, value in GROUP_DEFINITIONS.items()]
+        [
+            {
+                "event_primitive": key,
+                "definition": value,
+                "color": GROUP_COLORS[key],
+                "labeling_note": "Descriptive measured primitive, not a final inferred behavior class.",
+            }
+            for key, value in GROUP_DEFINITIONS.items()
+        ]
     )
 
-    segments_csv = output_dir / "micro_segments_descriptive_PedNYC1_scenario3_v3.csv"
-    frame_csv = output_dir / "features_with_descriptive_micro_segments_PedNYC1_scenario3_v3.csv"
-    summary_csv = output_dir / "micro_segment_summary_by_macro_PedNYC1_scenario3_v3.csv"
-    boundary_csv = output_dir / "micro_change_boundaries_PedNYC1_scenario3_v3.csv"
-    definitions_csv = output_dir / "micro_event_group_definitions_v3.csv"
-    standard_png = output_dir / "micro_standard_3panel_PedNYC1_scenario3_v3.png"
-    stacked_png = output_dir / "micro_stacked_feature_comparison_PedNYC1_scenario3_v3.png"
-    gantt_png = output_dir / "micro_gantt_descriptive_groups_PedNYC1_scenario3_v3.png"
+    segments_csv = output_dir / "micro_segments_descriptive_PedNYC1_scenario3_v4.csv"
+    frame_csv = output_dir / "features_with_descriptive_micro_segments_PedNYC1_scenario3_v4.csv"
+    summary_csv = output_dir / "micro_segment_summary_by_macro_PedNYC1_scenario3_v4.csv"
+    boundary_csv = output_dir / "micro_change_boundaries_PedNYC1_scenario3_v4.csv"
+    definitions_csv = output_dir / "micro_event_group_definitions_v4.csv"
+    standard_png = output_dir / "micro_standard_3panel_PedNYC1_scenario3_v4.png"
+    stacked_png = output_dir / "micro_stacked_feature_comparison_PedNYC1_scenario3_v4.png"
+    gantt_png = output_dir / "micro_gantt_descriptive_groups_PedNYC1_scenario3_v4.png"
 
     segments_df.to_csv(segments_csv, index=False)
     frame_df.to_csv(frame_csv, index=False)
