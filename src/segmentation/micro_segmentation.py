@@ -68,9 +68,26 @@ HESITATION_MAX_SECONDS = 1.50
 PAUSE_SPEED_MAX_MPS = 0.10
 PAUSE_MIN_SECONDS = 0.12
 
-# Descriptive event primitives. These are not final intent labels; they are
-# shorthand for measured properties so manual review can interpret the segment.
-GROUP_DEFINITIONS = {
+# Descriptive tags. These are independent measured dimensions, not final intent
+# labels. Keep them separated so review can filter/recombine dimensions later.
+MOTION_TAGS = [
+    "near_stationary",
+    "pausing",
+    "hesitating",
+    "speed_increasing",
+    "speed_decreasing",
+    "speed_steady",
+    "fluctuating",
+    "mixed_motion",
+]
+HEAD_TAGS = ["head_checking", "head_active", "head_still"]
+CAR_TAGS = ["yielding", "proceeding", "conflicted", "neutral"]
+TAG_DIMENSIONS = {
+    "motion": MOTION_TAGS,
+    "head": HEAD_TAGS,
+    "car_context": CAR_TAGS,
+}
+TAG_DEFINITIONS = {
     "near_stationary": "Mean VR-derived pedestrian speed is below 0.15 m/s or the segment contains near-zero speed.",
     "pausing": "VR-derived speed stays below 0.10 m/s for at least 0.12 seconds.",
     "hesitating": "Speed shows a short measured dip: drop >0.18 m/s and >22%, with partial recovery within 1.5 seconds.",
@@ -78,25 +95,31 @@ GROUP_DEFINITIONS = {
     "speed_decreasing": "Pedestrian speed slope is negative enough to indicate falling speed.",
     "speed_steady": "Speed coefficient of variation is low while mean speed is above walking threshold.",
     "fluctuating": "Speed coefficient of variation is elevated without a clear increasing/decreasing slope.",
+    "mixed_motion": "Motion does not cleanly match the other measured motion tags.",
     "head_checking": "Head turn spike is brief and exceeds 120 deg/s.",
     "head_active": "Head turn rate or head/body yaw difference is elevated.",
+    "head_still": "Head turn activity stays below the head_checking/head_active thresholds.",
     "yielding": "Near-car context with measured slowing, pausing, or hesitation.",
     "proceeding": "Near-car context with measured steady or increasing movement.",
-    "mixed_motion": "No single measured primitive dominates.",
+    "conflicted": "Near-car context with fluctuating motion or a high-jerk hesitation.",
+    "neutral": "Car-pedestrian distance never drops below the near-car threshold.",
 }
-GROUP_COLORS = {
+TAG_COLORS = {
     "near_stationary": "#4E79A7",
     "pausing": "#A0CBE8",
     "hesitating": "#F28E2B",
     "speed_increasing": "#59A14F",
     "speed_decreasing": "#E15759",
     "fluctuating": "#B07AA1",
+    "mixed_motion": "#9C755F",
     "head_active": "#EDC948",
     "head_checking": "#FFBE7D",
+    "head_still": "#BAB0AC",
     "speed_steady": "#76B7B2",
     "yielding": "#D37295",
     "proceeding": "#8CD17D",
-    "mixed_motion": "#9C755F",
+    "conflicted": "#B6992D",
+    "neutral": "#D0D0D0",
 }
 NEAR_STATIONARY_SPEED = 0.15
 WALKING_MEAN_SPEED = 0.25
@@ -515,92 +538,84 @@ def speed_drop_recovery(speed):
     return drop, recovery
 
 
-def classify_event_groups(features):
-    groups = []
-
-    # Motion primitives are direct measurements from VR-derived pedestrian speed.
-    if features["speed_mean"] < NEAR_STATIONARY_SPEED or features["speed_min"] < 0.05:
-        groups.append("near_stationary")
-    if features["zero_velocity_duration_sec"] >= PAUSE_MIN_SECONDS:
-        groups.append("pausing")
+def classify_motion_tag(features):
+    # Exactly one motion tag is assigned from VR-derived pedestrian motion.
+    if features["zero_velocity_duration_sec"] >= PAUSE_MIN_SECONDS and features["speed_min"] < PAUSE_SPEED_MAX_MPS:
+        return "pausing"
     if (
         features["speed_drop"] >= HESITATION_DROP_MIN_MPS
         and features["duration_sec"] <= HESITATION_MAX_SECONDS
         and features["speed_mean"] > WALKING_MEAN_SPEED
         and features["speed_recovery"] >= HESITATION_RECOVERY_FRACTION * features["speed_drop"]
     ):
-        groups.append("hesitating")
+        return "hesitating"
+    if features["speed_mean"] < NEAR_STATIONARY_SPEED or features["speed_min"] < 0.05:
+        return "near_stationary"
     if features["speed_slope"] > SPEED_SLOPE_MIN and features["speed_mean"] > WALKING_MEAN_SPEED:
-        groups.append("speed_increasing")
+        return "speed_increasing"
     if features["speed_slope"] < -SPEED_SLOPE_MIN and features["speed_mean"] > WALKING_MEAN_SPEED:
-        groups.append("speed_decreasing")
+        return "speed_decreasing"
     if features["speed_cv"] < STEADY_SPEED_CV_MAX and features["speed_mean"] > WALKING_MEAN_SPEED:
-        groups.append("speed_steady")
-    if (
-        features["speed_cv"] > FLUCTUATING_SPEED_CV_MIN
-        and features["speed_mean"] > WALKING_MEAN_SPEED
-        and "speed_increasing" not in groups
-        and "speed_decreasing" not in groups
-    ):
-        groups.append("fluctuating")
+        return "speed_steady"
+    if features["speed_mean"] > WALKING_MEAN_SPEED:
+        return "fluctuating"
+    return "mixed_motion"
 
-    # Head primitives describe observed head motion; they are not intent labels.
+
+def classify_head_tag(features):
+    # Exactly one head tag is assigned from observed head-turn signals.
     if features["head_turn_rate_max_abs"] >= HEAD_CHECK_TURN_RATE and features["duration_sec"] <= HEAD_CHECK_MAX_SECONDS:
-        groups.append("head_checking")
+        return "head_checking"
     if (
         features["head_turn_rate_mean_abs"] >= HEAD_ACTIVE_MEAN_TURN_RATE
         or features["head_turn_rate_max_abs"] >= HEAD_ACTIVE_TURN_RATE
         or features["head_body_yaw_diff_max_abs"] >= HEAD_ACTIVE_YAW_DIFF
     ):
-        groups.append("head_active")
+        return "head_active"
+    return "head_still"
 
-    # Car context is added only when the pedestrian is within the near-car range.
+
+def classify_car_tag(features, motion_tag):
+    # Car context is deliberately separate from motion/head tags.
     near_car = np.isfinite(features["distance_min"]) and features["distance_min"] < NEAR_CAR_DISTANCE_METERS
-    if near_car and any(group in groups for group in ["speed_decreasing", "pausing", "hesitating", "near_stationary"]):
-        groups.append("yielding")
-    if near_car and "yielding" not in groups and any(group in groups for group in ["speed_increasing", "speed_steady"]):
-        groups.append("proceeding")
-
-    if not groups:
-        groups.append("mixed_motion")
-    return groups
-
-
-def event_group_definition(event_group):
-    return " + ".join(GROUP_DEFINITIONS.get(group, group) for group in event_group.split("+"))
+    if not near_car:
+        return "neutral"
+    if motion_tag == "fluctuating" or (motion_tag == "hesitating" and features["accel_jerk_abs_mean"] > 0.8):
+        return "conflicted"
+    if motion_tag in {"speed_decreasing", "pausing", "hesitating"}:
+        return "yielding"
+    if motion_tag in {"speed_increasing", "speed_steady"}:
+        return "proceeding"
+    return "neutral"
 
 
-def color_for_group(event_group):
-    first = str(event_group).split("+")[0]
-    return GROUP_COLORS.get(first, GROUP_COLORS["mixed_motion"])
+def tag_evidence(features, motion_tag, head_tag, car_tag):
+    motion_evidence = {
+        "near_stationary": f"mean speed {features['speed_mean']:.2f} m/s; min {features['speed_min']:.2f} m/s",
+        "pausing": f"speed < {PAUSE_SPEED_MAX_MPS:.2f} m/s for {features['zero_velocity_duration_sec']:.2f} s",
+        "hesitating": f"speed drop {features['speed_drop']:.2f} m/s with recovery {features['speed_recovery']:.2f} m/s",
+        "speed_increasing": f"speed slope {features['speed_slope']:.2f} m/s/s",
+        "speed_decreasing": f"speed slope {features['speed_slope']:.2f} m/s/s",
+        "speed_steady": f"speed CV {features['speed_cv']:.2f}",
+        "fluctuating": f"speed CV {features['speed_cv']:.2f}",
+        "mixed_motion": "motion did not match the stronger motion rules",
+    }[motion_tag]
+    head_evidence = {
+        "head_checking": f"brief head turn max {features['head_turn_rate_max_abs']:.1f} deg/s",
+        "head_active": f"head turn mean {features['head_turn_rate_mean_abs']:.1f}, max {features['head_turn_rate_max_abs']:.1f} deg/s",
+        "head_still": f"head turn mean {features['head_turn_rate_mean_abs']:.1f}, max {features['head_turn_rate_max_abs']:.1f} deg/s",
+    }[head_tag]
+    car_evidence = {
+        "yielding": f"near-car slowing context; min distance {features['distance_min']:.2f} m",
+        "proceeding": f"near-car proceeding context; min distance {features['distance_min']:.2f} m",
+        "conflicted": f"near-car fluctuating/high-jerk context; min distance {features['distance_min']:.2f} m",
+        "neutral": f"min distance {features['distance_min']:.2f} m" if np.isfinite(features["distance_min"]) else "distance unavailable",
+    }[car_tag]
+    return motion_evidence, head_evidence, car_evidence
 
 
-def explain_groups(features, groups):
-    evidence = []
-    for group in groups:
-        if group == "near_stationary":
-            evidence.append(f"mean speed {features['speed_mean']:.2f} m/s; min {features['speed_min']:.2f} m/s")
-        elif group == "pausing":
-            evidence.append(f"speed < {PAUSE_SPEED_MAX_MPS:.2f} m/s for {features['zero_velocity_duration_sec']:.2f} s")
-        elif group == "hesitating":
-            evidence.append(f"speed drop {features['speed_drop']:.2f} m/s with recovery {features['speed_recovery']:.2f} m/s")
-        elif group == "speed_increasing":
-            evidence.append(f"speed slope {features['speed_slope']:.2f} m/s/s")
-        elif group == "speed_decreasing":
-            evidence.append(f"speed slope {features['speed_slope']:.2f} m/s/s")
-        elif group == "speed_steady":
-            evidence.append(f"speed CV {features['speed_cv']:.2f}")
-        elif group == "fluctuating":
-            evidence.append(f"speed CV {features['speed_cv']:.2f}")
-        elif group == "head_checking":
-            evidence.append(f"brief head turn max {features['head_turn_rate_max_abs']:.1f} deg/s")
-        elif group == "head_active":
-            evidence.append(f"head turn mean {features['head_turn_rate_mean_abs']:.1f}, max {features['head_turn_rate_max_abs']:.1f} deg/s")
-        elif group == "yielding":
-            evidence.append(f"near-car slowing context; min distance {features['distance_min']:.2f} m")
-        elif group == "proceeding":
-            evidence.append(f"near-car movement context; min distance {features['distance_min']:.2f} m")
-    return "; ".join(evidence)
+def color_for_tag(tag):
+    return TAG_COLORS.get(tag, TAG_COLORS["mixed_motion"])
 
 
 def describe_segment(features):
@@ -691,14 +706,21 @@ def extract_features(global_df, macro_row, micro_id, local_start, local_end, loc
     features["speed_drop"], features["speed_recovery"] = speed_drop_recovery(speed)
     features["zero_velocity_duration_sec"] = zero_speed_duration(speed, time_sec)
     features["distance_delta"] = features["distance_end"] - features["distance_start"]
-    groups = classify_event_groups(features)
-    features["event_group"] = "+".join(groups)
-    features["event_group_definition"] = event_group_definition(features["event_group"])
-    features["event_primitives"] = "|".join(groups)
-    features["primary_evidence"] = explain_groups(features, groups)
+    motion_tag = classify_motion_tag(features)
+    head_tag = classify_head_tag(features)
+    car_tag = classify_car_tag(features, motion_tag)
+    motion_evidence, head_evidence, car_evidence = tag_evidence(features, motion_tag, head_tag, car_tag)
+    features["motion_tag"] = motion_tag
+    features["head_tag"] = head_tag
+    features["car_tag"] = car_tag
+    features["motion_evidence"] = motion_evidence
+    features["head_evidence"] = head_evidence
+    features["car_context_evidence"] = car_evidence
+    features["tagging_note"] = "Tags are separated by dimension; combine motion_tag/head_tag/car_tag later during analysis if needed."
+    features["primary_evidence"] = " | ".join([motion_evidence, head_evidence, car_evidence])
     features["supporting_evidence"] = describe_segment(features)
     features["columns_used"] = "ped_speed_xz_smooth|ped_accel_xz_smooth|head_turn_rate|head_body_yaw_diff|car_ped_distance_xz_smooth|distance_closing_smooth|car_speed_xz_smooth|car_accel_xz_smooth|avatar_vr_gap_xz"
-    features["notes"] = "Compound labels are descriptive measurements; avatar_vr_gap_xz is audit-only and not used for movement boundaries."
+    features["notes"] = "Motion/head/car tags are independent descriptive measurements; avatar_vr_gap_xz is audit-only and not used for movement boundaries."
     features["plain_description"] = describe_segment(features)
     features["signals_used_for_boundaries"] = "residual ped_speed_xz_smooth|residual ped_accel_xz_smooth|residual head_turn_rate|raw speed pause/hesitation detectors"
     return features
@@ -708,8 +730,9 @@ def build_micro_segments(features_df, macro_df):
     rows = []
     frame_df = features_df.copy()
     frame_df["micro_segment_id"] = -1
-    frame_df["micro_event_group"] = "unassigned"
-    frame_df["micro_event_primitives"] = ""
+    frame_df["motion_tag"] = "unassigned"
+    frame_df["head_tag"] = "unassigned"
+    frame_df["car_tag"] = "unassigned"
     frame_df["macro_segment_id"] = -1
     frame_df["change_score"] = np.nan
     frame_df["change_score_raw"] = np.nan
@@ -719,8 +742,12 @@ def build_micro_segments(features_df, macro_df):
     frame_df["ped_accel_residual"] = np.nan
     frame_df["head_turn_trend"] = np.nan
     frame_df["head_turn_residual"] = np.nan
-    for group in GROUP_DEFINITIONS:
-        frame_df[f"is_{group}"] = False
+    for tag in MOTION_TAGS:
+        frame_df[f"is_motion_{tag}"] = False
+    for tag in HEAD_TAGS:
+        frame_df[f"is_{tag}"] = False
+    for tag in CAR_TAGS:
+        frame_df[f"is_car_{tag}"] = False
 
     next_micro_id = 0
     boundary_records = []
@@ -758,11 +785,12 @@ def build_micro_segments(features_df, macro_df):
                 continue
             rows.append(features)
             frame_df.loc[features["start_idx"]:features["end_idx"], "micro_segment_id"] = next_micro_id
-            frame_df.loc[features["start_idx"]:features["end_idx"], "micro_event_group"] = features["event_group"]
-            frame_df.loc[features["start_idx"]:features["end_idx"], "micro_event_primitives"] = features["event_primitives"]
-            for group in features["event_primitives"].split("|"):
-                if group:
-                    frame_df.loc[features["start_idx"]:features["end_idx"], f"is_{group}"] = True
+            frame_df.loc[features["start_idx"]:features["end_idx"], "motion_tag"] = features["motion_tag"]
+            frame_df.loc[features["start_idx"]:features["end_idx"], "head_tag"] = features["head_tag"]
+            frame_df.loc[features["start_idx"]:features["end_idx"], "car_tag"] = features["car_tag"]
+            frame_df.loc[features["start_idx"]:features["end_idx"], f"is_motion_{features['motion_tag']}"] = True
+            frame_df.loc[features["start_idx"]:features["end_idx"], f"is_{features['head_tag']}"] = True
+            frame_df.loc[features["start_idx"]:features["end_idx"], f"is_car_{features['car_tag']}"] = True
             next_micro_id += 1
 
     return pd.DataFrame(rows), frame_df, pd.DataFrame(boundary_records)
@@ -771,9 +799,16 @@ def build_micro_segments(features_df, macro_df):
 def summarize_segments(segments_df, macro_df):
     if segments_df.empty:
         return pd.DataFrame()
+    long_rows = []
+    for dimension, column in [("motion", "motion_tag"), ("head", "head_tag"), ("car_context", "car_tag")]:
+        dim_df = segments_df.copy()
+        dim_df["tag_dimension"] = dimension
+        dim_df["tag"] = dim_df[column]
+        long_rows.append(dim_df)
+    long_df = pd.concat(long_rows, ignore_index=True)
     summary = (
-        segments_df
-        .groupby(["macro_segment_id", "macro_label", "event_group"], dropna=False)
+        long_df
+        .groupby(["macro_segment_id", "macro_label", "tag_dimension", "tag"], dropna=False)
         .agg(
             count=("micro_segment_id", "count"),
             total_duration_sec=("duration_sec", "sum"),
@@ -792,7 +827,7 @@ def summarize_segments(segments_df, macro_df):
         100.0 * summary["total_duration_sec"] / summary["macro_duration_sec"],
         np.nan,
     )
-    return summary.sort_values(["macro_segment_id", "first_start_time_sec", "event_group"])
+    return summary.sort_values(["macro_segment_id", "tag_dimension", "first_start_time_sec", "tag"])
 
 
 def load_matplotlib():
@@ -832,10 +867,6 @@ def draw_boundaries(ax, boundary_df):
         ax.axvline(float(t), color="#AA3377", linewidth=0.7, alpha=0.45, zorder=2)
 
 
-def wrapped_group_label(event_group):
-    return str(event_group).replace("+", "+\n")
-
-
 def scenario_time_limits(macro_df, frame_df=None):
     max_time = np.nan
     if macro_df is not None and len(macro_df):
@@ -843,6 +874,60 @@ def scenario_time_limits(macro_df, frame_df=None):
     if (not np.isfinite(max_time)) and frame_df is not None and "elapsed_time_sec" in frame_df.columns:
         max_time = float(np.nanmax(frame_df["elapsed_time_sec"]))
     return 0.0, max_time if np.isfinite(max_time) else 1.0
+
+
+def dimensional_gantt_rows(segments_df):
+    rows = []
+    y_labels = []
+    y_positions = []
+    y_lookup = {}
+    y = 0
+    for dimension, tags in TAG_DIMENSIONS.items():
+        present_tags = tags
+        for tag in present_tags:
+            y_lookup[(dimension, tag)] = y
+            y_labels.append(f"{dimension}: {tag}")
+            y_positions.append(y)
+            y += 1
+        rows.append((dimension, y - len(present_tags), y - 1))
+        y += 0.7
+    return y_lookup, y_positions, y_labels, rows
+
+
+def draw_dimension_gantt(ax, segments_df):
+    y_lookup, y_positions, y_labels, dimension_blocks = dimensional_gantt_rows(segments_df)
+    for _, row in segments_df.iterrows():
+        entries = [
+            ("motion", row["motion_tag"]),
+            ("head", row["head_tag"]),
+            ("car_context", row["car_tag"]),
+        ]
+        for dimension, tag in entries:
+            y = y_lookup.get((dimension, tag))
+            if y is None:
+                continue
+            ax.barh(
+                y,
+                row["duration_sec"],
+                left=row["start_time_sec"],
+                height=0.52,
+                color=color_for_tag(tag),
+                edgecolor="white",
+                linewidth=0.8,
+            )
+    for _, _, end_y in dimension_blocks[:-1]:
+        ax.axhline(end_y + 0.85, color="#999999", linewidth=0.8, alpha=0.6)
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels(y_labels, fontsize=8)
+    return y_lookup
+
+
+def tag_legend_handles(Patch):
+    handles = []
+    for tags in TAG_DIMENSIONS.values():
+        for tag in tags:
+            handles.append(Patch(facecolor=TAG_COLORS[tag], label=tag))
+    return handles
 
 
 def plot_standard_three_panel(frame_df, macro_df, boundary_df, output_path):
@@ -903,25 +988,13 @@ def plot_stacked_comparison(frame_df, macro_df, segments_df, boundary_df, output
 
     ax = axes[-1]
     shade_macro_segments(ax, macro_df, label_top=True)
-    group_order = sorted(segments_df["event_group"].dropna().unique().tolist())
-    y_lookup = {group: i for i, group in enumerate(group_order)}
-    for _, row in segments_df.iterrows():
-        ax.barh(
-            y_lookup[row["event_group"]],
-            row["duration_sec"],
-            left=row["start_time_sec"],
-            height=0.6,
-            color=color_for_group(row["event_group"]),
-            edgecolor="white",
-            linewidth=0.8,
-        )
-    ax.set_yticks(range(len(group_order)))
-    ax.set_yticklabels([wrapped_group_label(group) for group in group_order], fontsize=7)
-    ax.set_title("Descriptive micro-segment groups", loc="left", fontsize=10)
+    draw_dimension_gantt(ax, segments_df)
+    ax.invert_yaxis()
+    ax.set_title("Descriptive micro-segment tags by dimension", loc="left", fontsize=10)
     ax.set_xlabel("Scenario elapsed time, seconds")
     ax.grid(True, axis="x", alpha=0.25)
     ax.set_xlim(*scenario_time_limits(macro_df, frame_df))
-    handles = [Patch(facecolor=GROUP_COLORS[group], label=group) for group in GROUP_DEFINITIONS]
+    handles = tag_legend_handles(Patch)
     fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 0.005), ncol=4, fontsize=8, frameon=False)
     fig.suptitle("Stacked Signal Comparison With Macro and Micro Segments", fontsize=14)
     fig.tight_layout(rect=[0, 0.06, 1, 0.97])
@@ -934,28 +1007,17 @@ def plot_gantt(segments_df, macro_df, output_path):
     plt, Patch = load_matplotlib()
     if plt is None:
         return False
-    group_order = sorted(segments_df["event_group"].dropna().unique().tolist())
-    fig, ax = plt.subplots(figsize=(22, max(8, 0.75 * len(group_order) + 3)))
+    _, y_positions, _, _ = dimensional_gantt_rows(segments_df)
+    fig, ax = plt.subplots(figsize=(22, max(8, 0.55 * len(y_positions) + 3)))
     shade_macro_segments(ax, macro_df, label_top=True)
-    y_lookup = {group: i for i, group in enumerate(group_order)}
-    for _, row in segments_df.iterrows():
-        ax.barh(
-            y_lookup[row["event_group"]],
-            row["duration_sec"],
-            left=row["start_time_sec"],
-            height=0.62,
-            color=color_for_group(row["event_group"]),
-            edgecolor="white",
-            linewidth=0.8,
-        )
-    ax.set_yticks(range(len(group_order)))
-    ax.set_yticklabels([wrapped_group_label(group) for group in group_order], fontsize=8)
+    draw_dimension_gantt(ax, segments_df)
+    ax.invert_yaxis()
     ax.set_xlabel("Scenario elapsed time, seconds")
-    ax.set_ylabel("Descriptive event group")
-    ax.set_title("Descriptive Micro-Segments by Event Group")
+    ax.set_ylabel("Descriptive tag dimension")
+    ax.set_title("Descriptive Micro-Segments by Separate Motion, Head, and Car Tags")
     ax.grid(True, axis="x", alpha=0.25)
     ax.set_xlim(*scenario_time_limits(macro_df))
-    handles = [Patch(facecolor=GROUP_COLORS[group], label=group) for group in GROUP_DEFINITIONS]
+    handles = tag_legend_handles(Patch)
     ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.18), ncol=4, fontsize=8, frameon=False)
     fig.tight_layout(rect=[0, 0.08, 1, 1])
     fig.savefig(output_path, dpi=240, bbox_inches="tight")
@@ -988,23 +1050,25 @@ def main():
     definitions_df = pd.DataFrame(
         [
             {
-                "event_primitive": key,
-                "definition": value,
-                "color": GROUP_COLORS[key],
-                "labeling_note": "Descriptive measured primitive, not a final inferred behavior class.",
+                "tag_dimension": dimension,
+                "tag": tag,
+                "definition": TAG_DEFINITIONS[tag],
+                "color": TAG_COLORS[tag],
+                "labeling_note": "Descriptive measured tag. Motion, head, and car-context tags are intentionally not pre-fused.",
             }
-            for key, value in GROUP_DEFINITIONS.items()
+            for dimension, tags in TAG_DIMENSIONS.items()
+            for tag in tags
         ]
     )
 
-    segments_csv = output_dir / "micro_segments_descriptive_PedNYC1_scenario3_v4.csv"
-    frame_csv = output_dir / "features_with_descriptive_micro_segments_PedNYC1_scenario3_v4.csv"
-    summary_csv = output_dir / "micro_segment_summary_by_macro_PedNYC1_scenario3_v4.csv"
-    boundary_csv = output_dir / "micro_change_boundaries_PedNYC1_scenario3_v4.csv"
-    definitions_csv = output_dir / "micro_event_group_definitions_v4.csv"
-    standard_png = output_dir / "micro_standard_3panel_PedNYC1_scenario3_v4.png"
-    stacked_png = output_dir / "micro_stacked_feature_comparison_PedNYC1_scenario3_v4.png"
-    gantt_png = output_dir / "micro_gantt_descriptive_groups_PedNYC1_scenario3_v4.png"
+    segments_csv = output_dir / "micro_segments_descriptive_PedNYC1_scenario3_v5.csv"
+    frame_csv = output_dir / "features_with_descriptive_micro_segments_PedNYC1_scenario3_v5.csv"
+    summary_csv = output_dir / "micro_segment_summary_by_macro_PedNYC1_scenario3_v5.csv"
+    boundary_csv = output_dir / "micro_change_boundaries_PedNYC1_scenario3_v5.csv"
+    definitions_csv = output_dir / "micro_event_tag_definitions_v5.csv"
+    standard_png = output_dir / "micro_standard_3panel_PedNYC1_scenario3_v5.png"
+    stacked_png = output_dir / "micro_stacked_feature_comparison_PedNYC1_scenario3_v5.png"
+    gantt_png = output_dir / "micro_gantt_dimensional_tags_PedNYC1_scenario3_v5.png"
 
     segments_df.to_csv(segments_csv, index=False)
     frame_df.to_csv(frame_csv, index=False)
@@ -1025,15 +1089,19 @@ def main():
     print(f"Saved frame-level CSV: {frame_csv}")
     print(f"Saved summary CSV: {summary_csv}")
     print(f"Saved boundary CSV: {boundary_csv}")
-    print(f"Saved event group definitions CSV: {definitions_csv}")
+    print(f"Saved event tag definitions CSV: {definitions_csv}")
     if wrote_standard:
         print(f"Saved standard 3-panel plot: {standard_png}")
     if wrote_stacked:
         print(f"Saved stacked comparison plot: {stacked_png}")
     if wrote_gantt:
         print(f"Saved Gantt plot: {gantt_png}")
-    print("\nMicro-segments by descriptive group:")
-    print(segments_df["event_group"].value_counts().to_string() if not segments_df.empty else "none")
+    print("\nMicro-segments by motion tag:")
+    print(segments_df["motion_tag"].value_counts().to_string() if not segments_df.empty else "none")
+    print("\nMicro-segments by head tag:")
+    print(segments_df["head_tag"].value_counts().to_string() if not segments_df.empty else "none")
+    print("\nMicro-segments by car-context tag:")
+    print(segments_df["car_tag"].value_counts().to_string() if not segments_df.empty else "none")
 
 
 if __name__ == "__main__":
