@@ -1,3 +1,4 @@
 matplotlib
+imageio-ffmpeg
 numpy
 pandas
