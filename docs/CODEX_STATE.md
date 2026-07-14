@@ -14,6 +14,7 @@ Replace the v6 web Gantt player with a standalone Python renderer that produces 
 - Full encoding completed: 931 frames, 1280x720, 30 fps, H.264 High profile, yuv420p, 31.03-second container duration, and 683,856-byte output.
 - ffmpeg decoded all 931 frames successfully. Encoded frames at the start, middle, and endpoint were visually inspected and matched the expected macro/segment/tag state.
 - At 30 fps, arbitrary timestamps are quantized to 33.333 ms frame intervals (for example, 13.577 seconds displays on the 13.600-second frame); the final frame explicitly clamps to the exact 31.002930-second scenario endpoint.
+- Commit `e810a33` (`Replace web Gantt with MP4 renderer`) was created and pushed to `origin/codex/micro-segmentation-v2`; `main` was not modified.
 
 ## Important decisions and reasons
 - Use exact v6 CSV data, not visually approximated intervals.
@@ -43,14 +44,15 @@ Replace the v6 web Gantt player with a standalone Python renderer that produces 
 - Extracted and visually inspected encoded frames at 0.000, approximately 13.577, and 31.003 seconds: passed.
 - Verified the repository MP4 SHA-256 matches the fully validated temporary render.
 - Final compile, CLI help, and `git diff --check`: passed.
+- Staged only the seven intended paths, inspected the staged snapshot, committed, and pushed the feature branch successfully.
 
 ## Current failures
 - No implementation or encoding failure remains.
 - The local `imageio-ffmpeg` installation inherited restrictive ACLs in this managed environment, so validation used its copied ffmpeg executable through `--ffmpeg`; the resolver was fixed so explicit paths are accepted before optional package imports.
 
 ## Remaining work
-- Stage the intended renderer, MP4, HTML removal, dependency, documentation, and state changes.
-- Inspect the staged snapshot, commit, and push the feature branch.
+- No required implementation work remains for the standalone MP4 renderer.
+- Integration into the existing four-frame ffmpeg composition is a separate optional next step.
 
 ## Exact next step
-Stage only the seven intended paths, inspect the staged diff, commit as `Replace web Gantt with MP4 renderer`, and push `codex/micro-segmentation-v2`.
+Use `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.mp4` as the top-right ffmpeg input in place of the existing speed graph.
