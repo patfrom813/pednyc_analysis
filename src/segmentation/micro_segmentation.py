@@ -87,6 +87,28 @@ TAG_DIMENSIONS = {
     "head": HEAD_TAGS,
     "car_context": CAR_TAGS,
 }
+TAG_OBSERVABILITY = {
+    "near_stationary": "observable",
+    "pausing": "observable",
+    "speed_increasing": "observable",
+    "speed_decreasing": "observable",
+    "speed_steady": "observable",
+    "fluctuating": "observable",
+    "head_active": "observable",
+    "head_still": "observable",
+    "neutral": "observable",
+    "hesitating": "inferred",
+    "mixed_motion": "inferred",
+    "head_checking": "inferred",
+    "yielding": "inferred",
+    "proceeding": "inferred",
+    "conflicted": "inferred",
+}
+OBSERVABILITY_ORDER = ["observable", "inferred"]
+OBSERVABILITY_LABELS = {
+    "observable": "Observable Kinematics",
+    "inferred": "Inferred Latent Behaviors",
+}
 TAG_DEFINITIONS = {
     "near_stationary": "Mean VR-derived pedestrian speed is below 0.15 m/s or the segment contains near-zero speed.",
     "pausing": "VR-derived speed stays below 0.10 m/s for at least 0.12 seconds.",
@@ -713,6 +735,12 @@ def extract_features(global_df, macro_row, micro_id, local_start, local_end, loc
     features["motion_tag"] = motion_tag
     features["head_tag"] = head_tag
     features["car_tag"] = car_tag
+    features["motion_tag_type"] = TAG_OBSERVABILITY[motion_tag]
+    features["head_tag_type"] = TAG_OBSERVABILITY[head_tag]
+    features["car_tag_type"] = TAG_OBSERVABILITY[car_tag]
+    features["has_inferred_behavior"] = any(
+        TAG_OBSERVABILITY[tag] == "inferred" for tag in [motion_tag, head_tag, car_tag]
+    )
     features["motion_evidence"] = motion_evidence
     features["head_evidence"] = head_evidence
     features["car_context_evidence"] = car_evidence
@@ -733,6 +761,10 @@ def build_micro_segments(features_df, macro_df):
     frame_df["motion_tag"] = "unassigned"
     frame_df["head_tag"] = "unassigned"
     frame_df["car_tag"] = "unassigned"
+    frame_df["motion_tag_type"] = "unassigned"
+    frame_df["head_tag_type"] = "unassigned"
+    frame_df["car_tag_type"] = "unassigned"
+    frame_df["has_inferred_behavior"] = False
     frame_df["macro_segment_id"] = -1
     frame_df["change_score"] = np.nan
     frame_df["change_score_raw"] = np.nan
@@ -788,6 +820,10 @@ def build_micro_segments(features_df, macro_df):
             frame_df.loc[features["start_idx"]:features["end_idx"], "motion_tag"] = features["motion_tag"]
             frame_df.loc[features["start_idx"]:features["end_idx"], "head_tag"] = features["head_tag"]
             frame_df.loc[features["start_idx"]:features["end_idx"], "car_tag"] = features["car_tag"]
+            frame_df.loc[features["start_idx"]:features["end_idx"], "motion_tag_type"] = features["motion_tag_type"]
+            frame_df.loc[features["start_idx"]:features["end_idx"], "head_tag_type"] = features["head_tag_type"]
+            frame_df.loc[features["start_idx"]:features["end_idx"], "car_tag_type"] = features["car_tag_type"]
+            frame_df.loc[features["start_idx"]:features["end_idx"], "has_inferred_behavior"] = features["has_inferred_behavior"]
             frame_df.loc[features["start_idx"]:features["end_idx"], f"is_motion_{features['motion_tag']}"] = True
             frame_df.loc[features["start_idx"]:features["end_idx"], f"is_{features['head_tag']}"] = True
             frame_df.loc[features["start_idx"]:features["end_idx"], f"is_car_{features['car_tag']}"] = True
@@ -804,11 +840,12 @@ def summarize_segments(segments_df, macro_df):
         dim_df = segments_df.copy()
         dim_df["tag_dimension"] = dimension
         dim_df["tag"] = dim_df[column]
+        dim_df["tag_type"] = dim_df["tag"].map(TAG_OBSERVABILITY)
         long_rows.append(dim_df)
     long_df = pd.concat(long_rows, ignore_index=True)
     summary = (
         long_df
-        .groupby(["macro_segment_id", "macro_label", "tag_dimension", "tag"], dropna=False)
+        .groupby(["macro_segment_id", "macro_label", "tag_dimension", "tag_type", "tag"], dropna=False)
         .agg(
             count=("micro_segment_id", "count"),
             total_duration_sec=("duration_sec", "sum"),
@@ -827,7 +864,7 @@ def summarize_segments(segments_df, macro_df):
         100.0 * summary["total_duration_sec"] / summary["macro_duration_sec"],
         np.nan,
     )
-    return summary.sort_values(["macro_segment_id", "tag_dimension", "first_start_time_sec", "tag"])
+    return summary.sort_values(["macro_segment_id", "tag_type", "tag_dimension", "first_start_time_sec", "tag"])
 
 
 def load_matplotlib():
@@ -846,7 +883,7 @@ def shade_macro_segments(ax, macro_df, label_top=False):
     for i, row in macro_df.iterrows():
         color = "#F7F7F7" if i % 2 == 0 else "#ECECEC"
         ax.axvspan(row["time_start_sec"], row["time_end_sec"], color=color, alpha=0.45, zorder=0)
-        ax.axvline(row["time_start_sec"], color="#777777", linewidth=0.8, alpha=0.8, zorder=1)
+        ax.axvline(row["time_start_sec"], color="#7F1D1D", linewidth=1.1, alpha=0.85, linestyle="--", zorder=1)
         if label_top:
             ax.text(
                 (row["time_start_sec"] + row["time_end_sec"]) / 2,
@@ -856,15 +893,15 @@ def shade_macro_segments(ax, macro_df, label_top=False):
                 ha="center",
                 va="top",
                 fontsize=8,
-                color="#555555",
+                color="#7F1D1D",
             )
     if len(macro_df):
-        ax.axvline(macro_df["time_end_sec"].iloc[-1], color="#777777", linewidth=0.8, alpha=0.8, zorder=1)
+        ax.axvline(macro_df["time_end_sec"].iloc[-1], color="#7F1D1D", linewidth=1.1, alpha=0.85, linestyle="--", zorder=1)
 
 
 def draw_boundaries(ax, boundary_df):
     for t in boundary_df["boundary_time_sec"].dropna().unique():
-        ax.axvline(float(t), color="#AA3377", linewidth=0.7, alpha=0.45, zorder=2)
+        ax.axvline(float(t), color="#2563EB", linewidth=0.7, alpha=0.45, zorder=2)
 
 
 def scenario_time_limits(macro_df, frame_df=None):
@@ -876,26 +913,44 @@ def scenario_time_limits(macro_df, frame_df=None):
     return 0.0, max_time if np.isfinite(max_time) else 1.0
 
 
-def dimensional_gantt_rows(segments_df):
-    rows = []
+def separated_gantt_rows():
+    blocks = []
     y_labels = []
     y_positions = []
     y_lookup = {}
     y = 0
-    for dimension, tags in TAG_DIMENSIONS.items():
-        present_tags = tags
-        for tag in present_tags:
-            y_lookup[(dimension, tag)] = y
-            y_labels.append(f"{dimension}: {tag}")
-            y_positions.append(y)
-            y += 1
-        rows.append((dimension, y - len(present_tags), y - 1))
-        y += 0.7
-    return y_lookup, y_positions, y_labels, rows
+    for tag_type in OBSERVABILITY_ORDER:
+        block_start = y
+        for dimension, tags in TAG_DIMENSIONS.items():
+            for tag in tags:
+                if TAG_OBSERVABILITY[tag] != tag_type:
+                    continue
+                y_lookup[(dimension, tag)] = y
+                y_labels.append(f"{dimension}: {tag}")
+                y_positions.append(y)
+                y += 1
+        blocks.append((tag_type, block_start, y - 1))
+        y += 0.9
+    return y_lookup, y_positions, y_labels, blocks
 
 
-def draw_dimension_gantt(ax, segments_df):
-    y_lookup, y_positions, y_labels, dimension_blocks = dimensional_gantt_rows(segments_df)
+def draw_separated_gantt(ax, segments_df):
+    y_lookup, y_positions, y_labels, blocks = separated_gantt_rows()
+    for tag_type, start_y, end_y in blocks:
+        color = "#F8FAFC" if tag_type == "observable" else "#F3F0EA"
+        ax.axhspan(start_y - 0.5, end_y + 0.5, color=color, alpha=0.65, zorder=-2)
+        ax.text(
+            0.01,
+            (start_y + end_y) / 2.0,
+            OBSERVABILITY_LABELS[tag_type],
+            transform=ax.get_yaxis_transform(),
+            ha="left",
+            va="center",
+            fontsize=9,
+            fontweight="bold",
+            color="#444444",
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.75, "pad": 2.0},
+        )
     for _, row in segments_df.iterrows():
         entries = [
             ("motion", row["motion_tag"]),
@@ -915,8 +970,8 @@ def draw_dimension_gantt(ax, segments_df):
                 edgecolor="white",
                 linewidth=0.8,
             )
-    for _, _, end_y in dimension_blocks[:-1]:
-        ax.axhline(end_y + 0.85, color="#999999", linewidth=0.8, alpha=0.6)
+    if len(blocks) > 1:
+        ax.axhline(blocks[0][2] + 0.7, color="#555555", linewidth=1.4, alpha=0.85)
     ax.set_yticks(y_positions)
     ax.set_yticklabels(y_labels, fontsize=8)
     return y_lookup
@@ -988,9 +1043,9 @@ def plot_stacked_comparison(frame_df, macro_df, segments_df, boundary_df, output
 
     ax = axes[-1]
     shade_macro_segments(ax, macro_df, label_top=True)
-    draw_dimension_gantt(ax, segments_df)
+    draw_separated_gantt(ax, segments_df)
     ax.invert_yaxis()
-    ax.set_title("Descriptive micro-segment tags by dimension", loc="left", fontsize=10)
+    ax.set_title("Observable kinematics vs. inferred latent tags", loc="left", fontsize=10)
     ax.set_xlabel("Scenario elapsed time, seconds")
     ax.grid(True, axis="x", alpha=0.25)
     ax.set_xlim(*scenario_time_limits(macro_df, frame_df))
@@ -1007,14 +1062,14 @@ def plot_gantt(segments_df, macro_df, output_path):
     plt, Patch = load_matplotlib()
     if plt is None:
         return False
-    _, y_positions, _, _ = dimensional_gantt_rows(segments_df)
+    _, y_positions, _, _ = separated_gantt_rows()
     fig, ax = plt.subplots(figsize=(22, max(8, 0.55 * len(y_positions) + 3)))
     shade_macro_segments(ax, macro_df, label_top=True)
-    draw_dimension_gantt(ax, segments_df)
+    draw_separated_gantt(ax, segments_df)
     ax.invert_yaxis()
     ax.set_xlabel("Scenario elapsed time, seconds")
-    ax.set_ylabel("Descriptive tag dimension")
-    ax.set_title("Descriptive Micro-Segments by Separate Motion, Head, and Car Tags")
+    ax.set_ylabel("Tag row")
+    ax.set_title("Observable Kinematics and Inferred Latent Behaviors")
     ax.grid(True, axis="x", alpha=0.25)
     ax.set_xlim(*scenario_time_limits(macro_df))
     handles = tag_legend_handles(Patch)
@@ -1032,7 +1087,7 @@ def main():
     if not args.macro_csv.exists():
         raise FileNotFoundError(f"Macro segment CSV not found: {args.macro_csv}")
 
-    output_dir = args.output_dir
+    output_dir = args.output_dir / "v6"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     features = clean_columns(pd.read_csv(args.feature_csv))
@@ -1052,23 +1107,27 @@ def main():
             {
                 "tag_dimension": dimension,
                 "tag": tag,
+                "tag_type": TAG_OBSERVABILITY[tag],
                 "definition": TAG_DEFINITIONS[tag],
                 "color": TAG_COLORS[tag],
-                "labeling_note": "Descriptive measured tag. Motion, head, and car-context tags are intentionally not pre-fused.",
+                "labeling_note": (
+                    "Observable tags are direct sensor-threshold measurements; inferred tags are structured hypotheses. "
+                    "Motion, head, and car-context tags are intentionally not pre-fused."
+                ),
             }
             for dimension, tags in TAG_DIMENSIONS.items()
             for tag in tags
         ]
     )
 
-    segments_csv = output_dir / "micro_segments_descriptive_PedNYC1_scenario3_v5.csv"
-    frame_csv = output_dir / "features_with_descriptive_micro_segments_PedNYC1_scenario3_v5.csv"
-    summary_csv = output_dir / "micro_segment_summary_by_macro_PedNYC1_scenario3_v5.csv"
-    boundary_csv = output_dir / "micro_change_boundaries_PedNYC1_scenario3_v5.csv"
-    definitions_csv = output_dir / "micro_event_tag_definitions_v5.csv"
-    standard_png = output_dir / "micro_standard_3panel_PedNYC1_scenario3_v5.png"
-    stacked_png = output_dir / "micro_stacked_feature_comparison_PedNYC1_scenario3_v5.png"
-    gantt_png = output_dir / "micro_gantt_dimensional_tags_PedNYC1_scenario3_v5.png"
+    segments_csv = output_dir / "micro_segments_descriptive_PedNYC1_scenario3_v6.csv"
+    frame_csv = output_dir / "features_with_descriptive_micro_segments_PedNYC1_scenario3_v6.csv"
+    summary_csv = output_dir / "micro_segment_summary_by_macro_PedNYC1_scenario3_v6.csv"
+    boundary_csv = output_dir / "micro_change_boundaries_PedNYC1_scenario3_v6.csv"
+    definitions_csv = output_dir / "micro_event_tag_definitions_v6.csv"
+    standard_png = output_dir / "micro_standard_3panel_PedNYC1_scenario3_v6.png"
+    stacked_png = output_dir / "micro_stacked_observable_inferred_PedNYC1_scenario3_v6.png"
+    gantt_png = output_dir / "micro_gantt_observable_inferred_PedNYC1_scenario3_v6.png"
 
     segments_df.to_csv(segments_csv, index=False)
     frame_df.to_csv(frame_csv, index=False)
@@ -1096,6 +1155,7 @@ def main():
         print(f"Saved stacked comparison plot: {stacked_png}")
     if wrote_gantt:
         print(f"Saved Gantt plot: {gantt_png}")
+    print(f"\nMicro-segments with any inferred tag: {int(segments_df['has_inferred_behavior'].sum()) if not segments_df.empty else 0}")
     print("\nMicro-segments by motion tag:")
     print(segments_df["motion_tag"].value_counts().to_string() if not segments_df.empty else "none")
     print("\nMicro-segments by head tag:")
