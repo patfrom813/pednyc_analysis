@@ -1,5 +1,8 @@
 from pathlib import Path
 import argparse
+import base64
+import io
+import json
 import sys
 
 import numpy as np
@@ -1058,10 +1061,7 @@ def plot_stacked_comparison(frame_df, macro_df, segments_df, boundary_df, output
     return True
 
 
-def plot_gantt(segments_df, macro_df, output_path):
-    plt, Patch = load_matplotlib()
-    if plt is None:
-        return False
+def build_gantt_figure(plt, Patch, segments_df, macro_df):
     _, y_positions, _, _ = separated_gantt_rows()
     fig, ax = plt.subplots(figsize=(22, max(8, 0.55 * len(y_positions) + 3)))
     shade_macro_segments(ax, macro_df, label_top=True)
@@ -1075,8 +1075,225 @@ def plot_gantt(segments_df, macro_df, output_path):
     handles = tag_legend_handles(Patch)
     ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.18), ncol=4, fontsize=8, frameon=False)
     fig.tight_layout(rect=[0, 0.08, 1, 1])
+    return fig, ax
+
+
+def plot_gantt(segments_df, macro_df, output_path):
+    plt, Patch = load_matplotlib()
+    if plt is None:
+        return False
+    fig, _ = build_gantt_figure(plt, Patch, segments_df, macro_df)
     fig.savefig(output_path, dpi=240, bbox_inches="tight")
     plt.close(fig)
+    return True
+
+
+def write_interactive_gantt(segments_df, macro_df, output_path):
+    plt, Patch = load_matplotlib()
+    if plt is None:
+        return False
+
+    fig, ax = build_gantt_figure(plt, Patch, segments_df, macro_df)
+    fig.canvas.draw()
+    axes_box = ax.get_position()
+    axis_bounds = {
+        "leftPct": 100.0 * axes_box.x0,
+        "rightPct": 100.0 * axes_box.x1,
+        "topPct": 100.0 * (1.0 - axes_box.y1),
+        "bottomPct": 100.0 * (1.0 - axes_box.y0),
+    }
+    image_buffer = io.BytesIO()
+    fig.savefig(image_buffer, format="png", dpi=120, facecolor="white")
+    plt.close(fig)
+
+    duration = scenario_time_limits(macro_df)[1]
+    segment_records = []
+    for _, row in segments_df.sort_values(["start_time_sec", "micro_segment_id"]).iterrows():
+        segment_records.append(
+            {
+                "id": int(row["micro_segment_id"]),
+                "macro": int(row["macro_segment_id"]),
+                "start": float(row["start_time_sec"]),
+                "end": float(row["end_time_sec"]),
+                "motion": str(row["motion_tag"]),
+                "head": str(row["head_tag"]),
+                "car": str(row["car_tag"]),
+            }
+        )
+    macro_records = [
+        {
+            "id": int(row["segment_id"]),
+            "start": float(row["time_start_sec"]),
+            "end": float(row["time_end_sec"]),
+        }
+        for _, row in macro_df.sort_values("time_start_sec").iterrows()
+    ]
+    payload = {
+        "duration": float(duration),
+        "axis": axis_bounds,
+        "segments": segment_records,
+        "macros": macro_records,
+    }
+    background = base64.b64encode(image_buffer.getvalue()).decode("ascii")
+    html = """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PedNYC micro-segmentation video verification</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0b0f14; color: #e5e7eb; }
+    main { width: min(1800px, 100%); margin: 0 auto; padding: 20px; }
+    h1 { margin: 0 0 6px; font-size: clamp(20px, 2vw, 30px); }
+    .hint { margin: 0 0 16px; color: #9ca3af; }
+    .card { overflow: hidden; border: 1px solid #374151; border-radius: 12px; background: #111827; box-shadow: 0 18px 50px #0008; }
+    .timeline { position: relative; width: 100%; background: white; }
+    .timeline img { display: block; width: 100%; height: auto; user-select: none; }
+    .playhead { position: absolute; width: 3px; transform: translateX(-1.5px); background: #ef4444; box-shadow: 0 0 0 1px #fff8, 0 0 12px #ef4444; pointer-events: none; z-index: 5; }
+    .playhead::before { content: ""; position: absolute; top: -7px; left: 50%; width: 13px; height: 13px; transform: translateX(-50%) rotate(45deg); border-radius: 2px; background: #ef4444; }
+    .time-badge { position: absolute; top: 7px; left: 50%; transform: translateX(-50%); padding: 4px 7px; border-radius: 5px; background: #991b1b; color: white; font: 700 12px/1 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: nowrap; }
+    .controls { padding: 16px; }
+    .seek { width: 100%; accent-color: #ef4444; cursor: pointer; }
+    .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+    button, select { min-height: 38px; border: 1px solid #4b5563; border-radius: 7px; background: #1f2937; color: #f9fafb; padding: 7px 12px; font: inherit; cursor: pointer; }
+    button:hover, select:hover { background: #374151; }
+    button.primary { border-color: #dc2626; background: #b91c1c; font-weight: 700; }
+    button.primary:hover { background: #dc2626; }
+    .clock { min-width: 160px; font: 700 15px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .active { flex: 1 1 520px; min-height: 38px; padding: 9px 12px; border: 1px solid #374151; border-radius: 7px; background: #0f172a; color: #d1d5db; }
+    .active strong { color: #fff; }
+    .footer-note { margin: 12px 0 0; color: #9ca3af; font-size: 13px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>PedNYC micro-segmentation video verification</h1>
+  <p class="hint">Align the simulation video to the same timestamp, then press Play. The bar advances in real elapsed time at 1×.</p>
+  <section class="card">
+    <div class="timeline" id="timeline">
+      <img alt="Observable and inferred micro-segmentation Gantt" src="data:image/png;base64,__BACKGROUND__">
+      <div class="playhead" id="playhead"><span class="time-badge" id="badge">0.000 s</span></div>
+    </div>
+    <div class="controls">
+      <input class="seek" id="seek" type="range" min="0" max="__DURATION__" step="0.001" value="0" aria-label="Scenario time">
+      <div class="control-row">
+        <button class="primary" id="play" type="button">Play</button>
+        <button id="restart" type="button">Restart</button>
+        <label>Speed
+          <select id="speed">
+            <option value="0.25">0.25×</option>
+            <option value="0.5">0.5×</option>
+            <option value="1" selected>1× real time</option>
+            <option value="1.5">1.5×</option>
+            <option value="2">2×</option>
+          </select>
+        </label>
+        <span class="clock" id="clock">0.000 / __DURATION__ s</span>
+        <div class="active" id="active"><strong>M0 · segment 0</strong> — loading tags…</div>
+      </div>
+      <p class="footer-note">Space toggles play/pause. Drag the slider for frame-level review. Playback uses a monotonic clock to avoid cumulative timer drift.</p>
+    </div>
+  </section>
+</main>
+<script>
+  const data = __PAYLOAD__;
+  const playhead = document.getElementById("playhead");
+  const badge = document.getElementById("badge");
+  const seek = document.getElementById("seek");
+  const playButton = document.getElementById("play");
+  const restartButton = document.getElementById("restart");
+  const speedSelect = document.getElementById("speed");
+  const clock = document.getElementById("clock");
+  const active = document.getElementById("active");
+  let current = 0;
+  let playing = false;
+  let rate = 1;
+  let anchorTime = 0;
+  let anchorWall = performance.now();
+
+  playhead.style.top = `${data.axis.topPct}%`;
+  playhead.style.height = `${data.axis.bottomPct - data.axis.topPct}%`;
+
+  function latestContaining(rows, time) {
+    let found = null;
+    for (const row of rows) {
+      if (row.start <= time + 1e-9 && time <= row.end + 1e-9) found = row;
+    }
+    return found;
+  }
+
+  function render() {
+    const fraction = data.duration > 0 ? current / data.duration : 0;
+    const x = data.axis.leftPct + fraction * (data.axis.rightPct - data.axis.leftPct);
+    playhead.style.left = `${x}%`;
+    seek.value = current.toFixed(3);
+    badge.textContent = `${current.toFixed(3)} s`;
+    clock.textContent = `${current.toFixed(3)} / ${data.duration.toFixed(3)} s`;
+    const segment = latestContaining(data.segments, current);
+    const macro = latestContaining(data.macros, current);
+    if (segment) {
+      const macroText = macro ? `M${macro.id}` : `M${segment.macro}`;
+      active.innerHTML = `<strong>${macroText} · segment ${segment.id}</strong> — motion: ${segment.motion} · head: ${segment.head} · car: ${segment.car}`;
+    } else {
+      active.innerHTML = `<strong>${macro ? `M${macro.id}` : "outside macro"}</strong> — no assigned micro-segment at this timestamp`;
+    }
+  }
+
+  function setCurrent(value) {
+    current = Math.max(0, Math.min(data.duration, Number(value) || 0));
+    anchorTime = current;
+    anchorWall = performance.now();
+    render();
+  }
+
+  function setPlaying(next) {
+    if (next && current >= data.duration) setCurrent(0);
+    playing = next;
+    anchorTime = current;
+    anchorWall = performance.now();
+    playButton.textContent = playing ? "Pause" : "Play";
+  }
+
+  playButton.addEventListener("click", () => setPlaying(!playing));
+  restartButton.addEventListener("click", () => { setPlaying(false); setCurrent(0); });
+  seek.addEventListener("input", event => setCurrent(event.target.value));
+  speedSelect.addEventListener("change", event => {
+    if (playing) current = Math.min(data.duration, anchorTime + (performance.now() - anchorWall) / 1000 * rate);
+    rate = Number(event.target.value);
+    anchorTime = current;
+    anchorWall = performance.now();
+    render();
+  });
+  document.addEventListener("keydown", event => {
+    if (event.code === "Space" && !["INPUT", "SELECT", "BUTTON"].includes(event.target.tagName)) {
+      event.preventDefault();
+      setPlaying(!playing);
+    }
+  });
+
+  function tick(now) {
+    if (playing) {
+      current = anchorTime + (now - anchorWall) / 1000 * rate;
+      if (current >= data.duration) {
+        current = data.duration;
+        setPlaying(false);
+      }
+      render();
+    }
+    requestAnimationFrame(tick);
+  }
+  render();
+  requestAnimationFrame(tick);
+</script>
+</body>
+</html>
+"""
+    html = html.replace("__BACKGROUND__", background)
+    html = html.replace("__DURATION__", f"{duration:.3f}")
+    html = html.replace("__PAYLOAD__", json.dumps(payload, separators=(",", ":")))
+    output_path.write_text(html, encoding="utf-8")
     return True
 
 
@@ -1128,6 +1345,7 @@ def main():
     standard_png = output_dir / "micro_standard_3panel_PedNYC1_scenario3_v6.png"
     stacked_png = output_dir / "micro_stacked_observable_inferred_PedNYC1_scenario3_v6.png"
     gantt_png = output_dir / "micro_gantt_observable_inferred_PedNYC1_scenario3_v6.png"
+    gantt_html = output_dir / "micro_gantt_observable_inferred_PedNYC1_scenario3_v6.html"
 
     segments_df.to_csv(segments_csv, index=False)
     frame_df.to_csv(frame_csv, index=False)
@@ -1135,11 +1353,12 @@ def main():
     boundary_df.to_csv(boundary_csv, index=False)
     definitions_df.to_csv(definitions_csv, index=False)
 
-    wrote_standard = wrote_stacked = wrote_gantt = False
+    wrote_standard = wrote_stacked = wrote_gantt = wrote_interactive_gantt = False
     if not args.no_plot:
         wrote_standard = plot_standard_three_panel(frame_df, macro_df, boundary_df, standard_png)
         wrote_stacked = plot_stacked_comparison(frame_df, macro_df, segments_df, boundary_df, stacked_png)
         wrote_gantt = plot_gantt(segments_df, macro_df, gantt_png)
+        wrote_interactive_gantt = write_interactive_gantt(segments_df, macro_df, gantt_html)
 
     print("\nDone.")
     print(f"Time source used: {time_source}")
@@ -1155,6 +1374,8 @@ def main():
         print(f"Saved stacked comparison plot: {stacked_png}")
     if wrote_gantt:
         print(f"Saved Gantt plot: {gantt_png}")
+    if wrote_interactive_gantt:
+        print(f"Saved interactive Gantt: {gantt_html}")
     print(f"\nMicro-segments with any inferred tag: {int(segments_df['has_inferred_behavior'].sum()) if not segments_df.empty else 0}")
     print("\nMicro-segments by motion tag:")
     print(segments_df["motion_tag"].value_counts().to_string() if not segments_df.empty else "none")
