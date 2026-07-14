@@ -1,55 +1,58 @@
 # CODEX State
 
 ## Objective
-Add an animated v6 micro-segmentation Gantt to `codex/micro-segmentation-v2` so a real-time playhead can be synchronized with a simulation video, then verify, commit, and push without modifying `main`.
+Replace the v6 web Gantt player with a standalone Python renderer that produces a 1280x720, 30 fps, H.264 MP4 for the top-right panel of the PedNYC four-frame video; verify it, commit, and push on `codex/micro-segmentation-v2` without modifying `main`.
 
 ## Confirmed findings
-- Current branch is `codex/micro-segmentation-v2` at `d07b515` (`Add observable inferred micro segmentation v6 outputs`); local `main` remains at `a6ec5b7`.
-- No applicable `AGENTS.md` exists. This state file was the only uncommitted item at task start.
-- The v6 Gantt is produced by `plot_gantt` in `src/segmentation/micro_segmentation.py` from the same segment and macro data used by the v6 CSV artifacts.
-- Scenario elapsed duration is approximately 31.003 seconds.
-- `gh` and a system `ffmpeg` executable are not installed. Git push remains available through the existing repository remote/authentication path; no pull request was requested.
-- A temporary full run compiled and completed successfully, producing the self-contained interactive Gantt with an embedded PNG, 31.003-second duration, segment/macro payloads, and no unresolved template placeholders.
-- In-app browser validation is unavailable because the browser runtime fails during initialization with `Cannot redefine property: process`; no alternate browser-control surface was used.
-- The final HTML is 154,838 bytes and contains 29 micro-segments, 5 macros, and an exact payload duration of 31.002930 seconds.
-- Playhead endpoint assertions pass: 0 seconds maps to the plot's left edge (8.768939% of the embedded image) and 31.002930 seconds maps to its right edge (99.318182%).
-- All eight regenerated pre-existing v6 CSV/PNG artifacts are byte-identical to their committed versions; the renderer refactor does not change the existing static outputs.
-- The embedded background was visually inspected and matches the observable/inferred v6 Gantt layout.
-- Implementation commit `8672a2c` (`Add interactive micro-segmentation Gantt`) was created and pushed to `origin/codex/micro-segmentation-v2`; `main` was not modified.
+- The task started from a clean `codex/micro-segmentation-v2` branch at `58ee5d9`; local `main` remains at `a6ec5b7`.
+- No applicable `AGENTS.md` exists.
+- Exact animation inputs are `outputs/graphs/micro_segmentation/v6/micro_segments_descriptive_PedNYC1_scenario3_v6.csv` (29 segments) and `outputs/graphs/macro_segmentation/macro_segments_PedNYC1_scenario3_v2.csv` (5 macro segments).
+- Exact scenario duration is 31.002930 seconds.
+- No system `ffmpeg`, `imageio-ffmpeg`, or other local encoder was found.
+- The standalone renderer now reads the exact v6 inputs, validates tag/schema coverage, and supports 1280x720 H.264 rendering plus single-frame PNG previews.
+- Visual QA at 13.577 seconds passed after two iterations: the playhead/time badge align, the x-axis is clear, and the bottom panel identifies M2, segment 11, speed_increasing, head_active, and neutral.
+- Full encoding completed: 931 frames, 1280x720, 30 fps, H.264 High profile, yuv420p, 31.03-second container duration, and 683,856-byte output.
+- ffmpeg decoded all 931 frames successfully. Encoded frames at the start, middle, and endpoint were visually inspected and matched the expected macro/segment/tag state.
+- At 30 fps, arbitrary timestamps are quantized to 33.333 ms frame intervals (for example, 13.577 seconds displays on the 13.600-second frame); the final frame explicitly clamps to the exact 31.002930-second scenario endpoint.
+- Commit `e810a33` (`Replace web Gantt with MP4 renderer`) was created and pushed to `origin/codex/micro-segmentation-v2`; `main` was not modified.
 
 ## Important decisions and reasons
-- Generate a self-contained interactive HTML artifact rather than a GIF. It can run at real-time 1x, pause, seek precisely, change speed, and display the active macro and tag dimensions, making video synchronization easier while avoiding a large raster animation.
-- Reuse the existing matplotlib Gantt drawing code for the embedded background so the static and animated views remain visually consistent.
-- Keep the work on the existing feature branch and stage only the animation implementation, generated HTML, and this state record.
+- Use exact v6 CSV data, not visually approximated intervals.
+- Create a separate, directly runnable MP4 renderer so the analysis pipeline and video-rendering concerns stay isolated.
+- Use matplotlib animation with H.264/yuv420p output. Resolve ffmpeg from `--ffmpeg`, environment variables, PATH, or `imageio-ffmpeg` in that order.
+- Remove the HTML generator and committed HTML artifact because the user explicitly wants to abandon the web path.
+- Render an exact final endpoint frame. At 30 fps this requires 931 frames, yielding a container duration of about 31.033 seconds; timestamps remain real-time through 31.000 seconds and the final frame clamps to 31.002930 seconds.
 
 ## Files inspected or modified
-- Inspected: `src/segmentation/micro_segmentation.py`.
-- Inspected: v6 CSV and PNG outputs under `outputs/graphs/micro_segmentation/v6/`.
-- Modified: `src/segmentation/micro_segmentation.py`, `README.md`, and `docs/CODEX_STATE.md`.
-- Added: `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.html`.
+- Inspected: `src/segmentation/micro_segmentation.py`, exact v6 segment CSV, macro CSV, README, and prior state file.
+- Added: `src/segmentation/render_micro_gantt_mp4.py`.
+- Added: `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.mp4`.
+- Modified: `src/segmentation/micro_segmentation.py`, `README.md`, `requirements.txt`, and `docs/CODEX_STATE.md`.
+- Removed: `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.html`.
 
 ## Commands and tests run
-- Read repository state and prior `docs/CODEX_STATE.md`.
-- Ran `git status -sb`, `git remote -v`, `git log`, recent commit inspection, and v6 file discovery.
-- Checked for `gh`, `ffmpeg`, and Python encoder modules.
-- In-memory Python compile check: passed.
-- Full script run to a temporary output directory: passed and generated all v6 artifacts, including the interactive HTML.
-- HTML structure checks confirmed the embedded background, exact duration, playhead, segment/macro payloads, and absence of unresolved placeholders.
-- Bundled Node `--check` against the extracted player JavaScript: passed.
-- Payload/coordinate assertions: 29 segments, 5 macros, exact duration, and matching start/end axis coordinates.
-- SHA-256 comparison of regenerated versus committed pre-existing v6 outputs: all eight matched.
-- Visual inspection of the exact embedded PNG background: passed.
-- Final in-memory compile, bundled Node JavaScript syntax check, and `git diff --check`: passed.
-- Staged only the four intended files, inspected the staged snapshot, committed, and pushed the feature branch successfully.
+- Read all applicable repository instructions/state.
+- Ran Git status/log checks and inspected exact CSV schemas.
+- Searched PATH, repository packages, common Windows program locations, and user-local applications for ffmpeg; none found.
+- In-memory compile check for both segmentation scripts: passed.
+- Rendered and dimension-checked 1280x720 previews at 13.577 seconds.
+- Visually inspected the corrected preview: passed.
+- Installed the declared `imageio-ffmpeg` dependency into the existing local package directory for validation.
+- Full 931-frame MP4 render using libx264: passed.
+- ffmpeg stream probe confirmed H.264 High, yuv420p progressive, 1280x720, 30 fps, and 31.03 seconds.
+- ffmpeg copy/decode check counted 931 frames.
+- Extracted and visually inspected encoded frames at 0.000, approximately 13.577, and 31.003 seconds: passed.
+- Verified the repository MP4 SHA-256 matches the fully validated temporary render.
+- Final compile, CLI help, and `git diff --check`: passed.
+- Staged only the seven intended paths, inspected the staged snapshot, committed, and pushed the feature branch successfully.
 
 ## Current failures
-- No implementation or generation failure.
-- Publishing prerequisite note: `gh` is unavailable, so no PR workflow can be used; direct Git push will be used because that is the requested outcome.
-- In-app browser interaction testing is blocked by browser-runtime initialization, so JavaScript syntax and deterministic coordinate/payload checks are required before publishing.
+- No implementation or encoding failure remains.
+- The local `imageio-ffmpeg` installation inherited restrictive ACLs in this managed environment, so validation used its copied ffmpeg executable through `--ffmpeg`; the resolver was fixed so explicit paths are accepted before optional package imports.
 
 ## Remaining work
-- No required implementation work remains for the requested interactive Gantt.
-- Optional manual check: open the HTML in a local browser and align it with the simulation video; automated in-app browser interaction was unavailable in this session.
+- No required implementation work remains for the standalone MP4 renderer.
+- Integration into the existing four-frame ffmpeg composition is a separate optional next step.
 
 ## Exact next step
-Open `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.html` from the pushed branch in a browser, seek the simulation video to the same timestamp, and press Play at 1x.
+Use `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.mp4` as the top-right ffmpeg input in place of the existing speed graph.
