@@ -15,6 +15,7 @@ Add an animated v6 micro-segmentation Gantt to `codex/micro-segmentation-v2` so 
 - Playhead endpoint assertions pass: 0 seconds maps to the plot's left edge (8.768939% of the embedded image) and 31.002930 seconds maps to its right edge (99.318182%).
 - All eight regenerated pre-existing v6 CSV/PNG artifacts are byte-identical to their committed versions; the renderer refactor does not change the existing static outputs.
 - The embedded background was visually inspected and matches the observable/inferred v6 Gantt layout.
+- Implementation commit `8672a2c` (`Add interactive micro-segmentation Gantt`) was created and pushed to `origin/codex/micro-segmentation-v2`; `main` was not modified.
 
 ## Important decisions and reasons
 - Generate a self-contained interactive HTML artifact rather than a GIF. It can run at real-time 1x, pause, seek precisely, change speed, and display the active macro and tag dimensions, making video synchronization easier while avoiding a large raster animation.
@@ -39,6 +40,7 @@ Add an animated v6 micro-segmentation Gantt to `codex/micro-segmentation-v2` so 
 - SHA-256 comparison of regenerated versus committed pre-existing v6 outputs: all eight matched.
 - Visual inspection of the exact embedded PNG background: passed.
 - Final in-memory compile, bundled Node JavaScript syntax check, and `git diff --check`: passed.
+- Staged only the four intended files, inspected the staged snapshot, committed, and pushed the feature branch successfully.
 
 ## Current failures
 - No implementation or generation failure.
@@ -46,7 +48,8 @@ Add an animated v6 micro-segmentation Gantt to `codex/micro-segmentation-v2` so 
 - In-app browser interaction testing is blocked by browser-runtime initialization, so JavaScript syntax and deterministic coordinate/payload checks are required before publishing.
 
 ## Remaining work
-- Stage only the four intended files, commit, and push `codex/micro-segmentation-v2`.
+- No required implementation work remains for the requested interactive Gantt.
+- Optional manual check: open the HTML in a local browser and align it with the simulation video; automated in-app browser interaction was unavailable in this session.
 
 ## Exact next step
-Stage the four intended files, commit as `Add interactive micro-segmentation Gantt`, and push `codex/micro-segmentation-v2`.
+Open `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.html` from the pushed branch in a browser, seek the simulation video to the same timestamp, and press Play at 1x.
