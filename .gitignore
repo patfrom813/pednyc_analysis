@@ -2,3 +2,5 @@
 __pycache__/
 *.pyc
 .python_packages/
+outputs/processed/
+outputs/graphs/pednyc*/

@@ -1,5 +1,22 @@
 # PedNYC analysis
 
+## General pipeline
+
+The reusable pipeline discovers participant folders and flat scenario CSVs at
+runtime. No participant or scenario is selected in source code.
+
+```powershell
+python run_batch.py -p 1 --list
+python run_single.py -p 1 -s 3
+python run_batch.py -p 1 --pattern "1*" --no-plots
+python run_batch.py -p 2 --all
+python validate.py -p 1 -s 3
+```
+
+Pass `--config config_default.yaml` to load editable thresholds. Processed
+tables are written below `outputs/processed/pednyc{pid}/scenario{scenario}`;
+participant plots are written below `outputs/graphs/pednyc{pid}`.
+
 ## Animated micro-segmentation Gantt MP4
 
 Generate the exact v6 micro-segmentation data, then render the compositing-ready
