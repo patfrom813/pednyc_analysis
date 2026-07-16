@@ -78,6 +78,34 @@ report at:
 Only scenario 3 is currently available under `data/raw`; no scenarios were
 fabricated.
 
+## Scenario 7 run
+
+Scenario 7 was processed from the compatible external raw file
+`CSV_Scenario-Ped-7_Session-temp_2024-02-22-13-38-21.csv` without changing any
+thresholds:
+
+- Raw/decode rows: 877/877; decoded columns: 1006.
+- Elapsed duration: 41.770508 seconds.
+- Median valid dt: 0.048340 seconds (~20.687 Hz).
+- Macro segments: 5, with boundaries at 0.000000, 9.894287, 13.490723,
+  23.816650, 30.650391, and 41.770508 seconds.
+- Micro segments/boundary records: 32/40.
+- Motion counts: pausing 16, speed_steady 5, speed_increasing 4,
+  speed_decreasing 4, mixed_motion 2, hesitating 1.
+- Head counts: head_active 16 and head_still 16.
+- Car-context counts: neutral 28 and yielding 4.
+- Seven micro segments contain at least one inferred tag; 25 contain only
+  observable tags.
+- The 1280×720 H.264 Gantt contains 1,254 frames at 30 fps and clamps its final
+  frame to 41.770508 seconds.
+- No warnings, failed outputs, or skipped outputs were reported.
+
+The committed review set intentionally omits the large decoded, metrics, and
+frame-level micro CSVs. They remain locally reproducible from the source raw
+CSV. The scenario report, compact tables, diagnostics, macro/micro plots, and
+Gantt MP4 are committed under
+`outputs/graphs/exact_v6/pednyc1/scenario7`.
+
 ## Commands run
 
 ```powershell
