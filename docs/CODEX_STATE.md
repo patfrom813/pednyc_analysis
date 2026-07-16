@@ -1,58 +1,107 @@
 # CODEX State
 
 ## Objective
-Replace the v6 web Gantt player with a standalone Python renderer that produces a 1280x720, 30 fps, H.264 MP4 for the top-right panel of the PedNYC four-frame video; verify it, commit, and push on `codex/micro-segmentation-v2` without modifying `main`.
 
-## Confirmed findings
-- The task started from a clean `codex/micro-segmentation-v2` branch at `58ee5d9`; local `main` remains at `a6ec5b7`.
+Generalize the canonical PedNYC raw → decode → metrics v1 → macro v2 → micro
+v6 → plots/Gantt workflow without changing its tuned formulas, thresholds,
+ordering, or fallback behavior.
+
+## Branch and safety
+
+- Active branch: `refactored`.
+- Requested starting point: `origin/codex/micro-segmentation-v2` at `f2e2667`.
+- The pre-existing local `refactored` branch is a descendant of `f2e2667`.
+- `main` remains untouched at `a6ec5b7`.
+- Pre-existing unrelated dirty changes were preserved and excluded from the
+  canonical-pipeline commit scope.
 - No applicable `AGENTS.md` exists.
-- Exact animation inputs are `outputs/graphs/micro_segmentation/v6/micro_segments_descriptive_PedNYC1_scenario3_v6.csv` (29 segments) and `outputs/graphs/macro_segmentation/macro_segments_PedNYC1_scenario3_v2.csv` (5 macro segments).
-- Exact scenario duration is 31.002930 seconds.
-- No system `ffmpeg`, `imageio-ffmpeg`, or other local encoder was found.
-- The standalone renderer now reads the exact v6 inputs, validates tag/schema coverage, and supports 1280x720 H.264 rendering plus single-frame PNG previews.
-- Visual QA at 13.577 seconds passed after two iterations: the playhead/time badge align, the x-axis is clear, and the bottom panel identifies M2, segment 11, speed_increasing, head_active, and neutral.
-- Full encoding completed: 931 frames, 1280x720, 30 fps, H.264 High profile, yuv420p, 31.03-second container duration, and 683,856-byte output.
-- ffmpeg decoded all 931 frames successfully. Encoded frames at the start, middle, and endpoint were visually inspected and matched the expected macro/segment/tag state.
-- At 30 fps, arbitrary timestamps are quantized to 33.333 ms frame intervals (for example, 13.577 seconds displays on the 13.600-second frame); the final frame explicitly clamps to the exact 31.002930-second scenario endpoint.
-- Commit `e810a33` (`Replace web Gantt with MP4 renderer`) was created and pushed to `origin/codex/micro-segmentation-v2`; `main` was not modified.
 
-## Important decisions and reasons
-- Use exact v6 CSV data, not visually approximated intervals.
-- Create a separate, directly runnable MP4 renderer so the analysis pipeline and video-rendering concerns stay isolated.
-- Use matplotlib animation with H.264/yuv420p output. Resolve ffmpeg from `--ffmpeg`, environment variables, PATH, or `imageio-ffmpeg` in that order.
-- Remove the HTML generator and committed HTML artifact because the user explicitly wants to abandon the web path.
-- Render an exact final endpoint frame. At 30 fps this requires 931 frames, yielding a container duration of about 31.033 seconds; timestamps remain real-time through 31.000 seconds and the final frame clamps to 31.002930 seconds.
+## Architecture
 
-## Files inspected or modified
-- Inspected: `src/segmentation/micro_segmentation.py`, exact v6 segment CSV, macro CSV, README, and prior state file.
-- Added: `src/segmentation/render_micro_gantt_mp4.py`.
-- Added: `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.mp4`.
-- Modified: `src/segmentation/micro_segmentation.py`, `README.md`, `requirements.txt`, and `docs/CODEX_STATE.md`.
-- Removed: `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.html`.
+- `src/scenario_pipeline/scenario.py`: filename parsing, raw discovery, and the
+  immutable `ScenarioPaths` artifact map.
+- `src/scenario_pipeline/runner.py`: public canonical stage methods, sanity
+  checks, ffmpeg fallback, regression comparison, and Markdown reporting.
+- `src/scenario_pipeline/run_scenario.py`: single/raw-ID/all-scenarios CLI.
+- The package is named `scenario_pipeline` because this branch already contains
+  a committed `src/pipeline.py`; a `src/pipeline/` package would shadow it.
+- Canonical logic remains in `decode_first.py`,
+  `create_metrics_and_graph.py`, `macro_segmentation.py`, and
+  `micro_segmentation.py`. The runner supplies explicit scenario paths.
 
-## Commands and tests run
-- Read all applicable repository instructions/state.
-- Ran Git status/log checks and inspected exact CSV schemas.
-- Searched PATH, repository packages, common Windows program locations, and user-local applications for ffmpeg; none found.
-- In-memory compile check for both segmentation scripts: passed.
-- Rendered and dimension-checked 1280x720 previews at 13.577 seconds.
-- Visually inspected the corrected preview: passed.
-- Installed the declared `imageio-ffmpeg` dependency into the existing local package directory for validation.
-- Full 931-frame MP4 render using libx264: passed.
-- ffmpeg stream probe confirmed H.264 High, yuv420p progressive, 1280x720, 30 fps, and 31.03 seconds.
-- ffmpeg copy/decode check counted 931 frames.
-- Extracted and visually inspected encoded frames at 0.000, approximately 13.577, and 31.003 seconds: passed.
-- Verified the repository MP4 SHA-256 matches the fully validated temporary render.
-- Final compile, CLI help, and `git diff --check`: passed.
-- Staged only the seven intended paths, inspected the staged snapshot, committed, and pushed the feature branch successfully.
+## Verified implementation discrepancies
 
-## Current failures
-- No implementation or encoding failure remains.
-- The local `imageio-ffmpeg` installation inherited restrictive ACLs in this managed environment, so validation used its copied ffmpeg executable through `--ffmpeg`; the resolver was fixed so explicit paths are accepted before optional package imports.
+- Committed raw `ScenarioTime` is already 0–31.002930 seconds;
+  214971–216902 is `Frame Number`.
+- Committed ground-truth macro/micro raw-time fields were generated from a
+  different local feature source, so regression uses elapsed time and tags.
+- Stage 1 retains a usable existing `dt`; otherwise it derives
+  `ScenarioTime.diff()`.
+- Macro boundary candidates may collapse; the implementation does not promise
+  exactly five segments for arbitrary scenarios.
+- Micro lag zero is a one-frame delta, peak prominence is immediate-neighbor
+  based, and merged provenance follows the surviving boundary index.
+- Stage 1 produces up to ten numbered plots. The old kink PNG is not canonical.
+- The committed root-level scenario-3 feature CSV is stale and is never used by
+  the generalized runner.
 
-## Remaining work
-- No required implementation work remains for the standalone MP4 renderer.
-- Integration into the existing four-frame ffmpeg composition is a separate optional next step.
+## Scenario 3 regression result
 
-## Exact next step
-Use `outputs/graphs/micro_segmentation/v6/micro_gantt_observable_inferred_PedNYC1_scenario3_v6.mp4` as the top-right ffmpeg input in place of the existing speed graph.
+- Raw/decode rows: 648/648.
+- Decoded columns: 1006.
+- Elapsed duration: 31.002930 seconds.
+- Median valid dt: 0.047608 seconds (~21.005 Hz).
+- Macro segments: 5.
+- Elapsed boundaries: 0, 7.828857, 10.790771, 20.499023, 28.346191,
+  31.002930; all match with an absolute tolerance of 0.06 seconds.
+- Macro labels: exact ordered match.
+- Micro segments: 29/29.
+- Ordered `motion_tag`/`head_tag`/`car_tag` triples: exact match after safely
+  parsing the padded committed CSV with `index_col=False`.
+- Boundary records: 37/37.
+- Motion counts: pausing 7, speed_decreasing 6, speed_steady 5, mixed_motion 4,
+  hesitating 3, speed_increasing 3, near_stationary 1.
+- Head counts: head_active 18, head_still 10, head_checking 1.
+- Car counts: neutral 20, yielding 5, proceeding 4.
+- Scenario-specific MP4: 1280×720, 30 fps, 931 frames, H.264/yuv420p,
+  endpoint 31.002930 seconds.
+
+## Outputs
+
+Scenario 3 generated the decoded CSV, metrics CSV, legacy v1 segments, both
+inventories, ten Stage 1 diagnostic PNGs and four-frame copies, macro CSV/PNG,
+all five micro CSVs, all three micro PNGs, the Gantt MP4, and the Markdown
+report at:
+
+`outputs/graphs/exact_v6/pednyc1/scenario3/PedNYC1_scenario3_report.md`
+
+Only scenario 3 is currently available under `data/raw`; no scenarios were
+fabricated.
+
+## Commands run
+
+```powershell
+python -m unittest tests.test_scenario_pipeline -v
+python src\scenario_pipeline\run_scenario.py --scenario-id 3 --force
+```
+
+The full run used the repository `.python_packages` through `PYTHONPATH` and the
+available ffmpeg executable. Unit coverage includes path parsing, output names,
+time-source selection, one-column rejection, stale-metrics protection, artifact
+completeness, missing-ffmpeg midpoint fallback, and scenario-3 boundary/tag
+regression.
+
+## Known limitations
+
+- Compatible input filenames must follow `CSV_Scenario-Ped-N_Session-*.csv`.
+- Inputs must use the same logger column layout/units as the existing study.
+- Thresholds are intentionally not retuned when a new scenario fails sanity
+  checks.
+- Large generated decoded/features/MP4 artifacts are ignored and are not part
+  of the intended commit.
+
+## Next scenario command
+
+```powershell
+python src\scenario_pipeline\run_scenario.py data\raw\CSV_Scenario-Ped-N_Session-....csv
+```

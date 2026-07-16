@@ -166,6 +166,12 @@ def parse_args():
     parser.add_argument("--feature-csv", type=Path, default=DEFAULT_FEATURE_CSV)
     parser.add_argument("--macro-csv", type=Path, default=DEFAULT_MACRO_CSV)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--participant", type=int, default=1)
+    parser.add_argument("--scenario", default="3")
+    parser.add_argument(
+        "--scenario-stem",
+        help="Scenario-specific output stem, for example PedNYC1_scenario3.",
+    )
     parser.add_argument("--no-plot", action="store_true", help="Skip PNG plot generation.")
     return parser.parse_args()
 
@@ -1125,14 +1131,15 @@ def main():
         ]
     )
 
-    segments_csv = output_dir / "micro_segments_descriptive_PedNYC1_scenario3_v6.csv"
-    frame_csv = output_dir / "features_with_descriptive_micro_segments_PedNYC1_scenario3_v6.csv"
-    summary_csv = output_dir / "micro_segment_summary_by_macro_PedNYC1_scenario3_v6.csv"
-    boundary_csv = output_dir / "micro_change_boundaries_PedNYC1_scenario3_v6.csv"
+    identity = args.scenario_stem or f"PedNYC{args.participant}_scenario{args.scenario}"
+    segments_csv = output_dir / f"micro_segments_descriptive_{identity}_v6.csv"
+    frame_csv = output_dir / f"features_with_descriptive_micro_segments_{identity}_v6.csv"
+    summary_csv = output_dir / f"micro_segment_summary_by_macro_{identity}_v6.csv"
+    boundary_csv = output_dir / f"micro_change_boundaries_{identity}_v6.csv"
     definitions_csv = output_dir / "micro_event_tag_definitions_v6.csv"
-    standard_png = output_dir / "micro_standard_3panel_PedNYC1_scenario3_v6.png"
-    stacked_png = output_dir / "micro_stacked_observable_inferred_PedNYC1_scenario3_v6.png"
-    gantt_png = output_dir / "micro_gantt_observable_inferred_PedNYC1_scenario3_v6.png"
+    standard_png = output_dir / f"micro_standard_3panel_{identity}_v6.png"
+    stacked_png = output_dir / f"micro_stacked_observable_inferred_{identity}_v6.png"
+    gantt_png = output_dir / f"micro_gantt_observable_inferred_{identity}_v6.png"
 
     segments_df.to_csv(segments_csv, index=False)
     frame_df.to_csv(frame_csv, index=False)

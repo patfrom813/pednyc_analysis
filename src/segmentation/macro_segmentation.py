@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -8,17 +9,28 @@ import matplotlib.pyplot as plt
 # Paths
 # ============================================================
 
-ROOT = Path(r"C:\Users\patl5\OneDrive\Desktop\BURE\pednyc_analysis")
+ROOT = Path(__file__).resolve().parents[2]
 
-INPUT_CSV = Path(
-    r"C:\Users\patl5\OneDrive\Desktop\BURE\pednyc_analysis\data\processed\features_PedNYC1_scenario3_metrics_v1.csv"
-)
 
-OUTPUT_DIR = ROOT / "outputs" / "graphs" / "macro_segmentation"
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run the established PedNYC macro-v2 algorithm.")
+    parser.add_argument("--input-csv", type=Path, default=ROOT / "data" / "processed" / "features_PedNYC1_scenario3_metrics_v1.csv")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "outputs" / "graphs" / "macro_segmentation")
+    parser.add_argument("--segments-csv", type=Path)
+    parser.add_argument("--plot-path", type=Path)
+    return parser.parse_args()
+
+
+ARGS = parse_args()
+INPUT_CSV = ARGS.input_csv
+
+OUTPUT_DIR = ARGS.output_dir
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-SEGMENTS_CSV = OUTPUT_DIR / "macro_segments_PedNYC1_scenario3_v2.csv"
-PLOT_PATH = OUTPUT_DIR / "macro_segments_PedNYC1_scenario3_v2.png"
+SEGMENTS_CSV = ARGS.segments_csv or (OUTPUT_DIR / "macro_segments_PedNYC1_scenario3_v2.csv")
+PLOT_PATH = ARGS.plot_path or (OUTPUT_DIR / "macro_segments_PedNYC1_scenario3_v2.png")
+SEGMENTS_CSV.parent.mkdir(parents=True, exist_ok=True)
+PLOT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================================

@@ -1,4 +1,5 @@
 import base64
+import argparse
 import struct
 from pathlib import Path
 
@@ -8,12 +9,23 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
-raw_matches = sorted(RAW_DIR.glob("CSV_Scenario-Ped-3_Session-temp_*.csv"))
-if not raw_matches:
-    raise FileNotFoundError(f"No raw Ped 3 CSV found in {RAW_DIR}")
 
-INPUT_FILE = raw_matches[0]
-OUTPUT_FILE = PROCESSED_DIR / "decoded_clean_PedNYC1_scenario3.csv"
+def parse_args():
+    parser = argparse.ArgumentParser(description="Decode Unity float arrays without changing row-level data.")
+    parser.add_argument("--input-csv", type=Path)
+    parser.add_argument("--output-csv", type=Path)
+    return parser.parse_args()
+
+
+ARGS = parse_args()
+if ARGS.input_csv is None:
+    raw_matches = sorted(RAW_DIR.glob("CSV_Scenario-Ped-3_Session-temp_*.csv"))
+    if not raw_matches:
+        raise FileNotFoundError(f"No default raw scenario CSV found in {RAW_DIR}")
+    INPUT_FILE = raw_matches[0]
+else:
+    INPUT_FILE = ARGS.input_csv
+OUTPUT_FILE = ARGS.output_csv or (PROCESSED_DIR / "decoded_clean_PedNYC1_scenario3.csv")
 
 
 def decode_float_array(value):
@@ -33,7 +45,7 @@ def decode_float_array(value):
         return None
 
 
-PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # Read original file
 df = pd.read_csv(INPUT_FILE, sep=";")

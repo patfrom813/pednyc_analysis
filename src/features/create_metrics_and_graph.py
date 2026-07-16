@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -7,17 +8,30 @@ import matplotlib.pyplot as plt
 # Project paths
 # ============================================================
 
-ROOT = Path(r"C:\Users\patl5\OneDrive\Desktop\BURE\pednyc_analysis")
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run the established PedNYC metrics-v1 algorithm.")
+    parser.add_argument("--input-csv", type=Path, default=ROOT / "data" / "processed" / "decoded_clean_PedNYC1_scenario3.csv")
+    parser.add_argument("--output-csv", type=Path, default=ROOT / "data" / "processed" / "features_PedNYC1_scenario3_metrics_v1.csv")
+    parser.add_argument("--segment-csv", type=Path, default=ROOT / "data" / "processed" / "segments_PedNYC1_scenario3_v1.csv")
+    parser.add_argument("--graph-dir", type=Path, default=ROOT / "outputs" / "graphs" / "scenario3_metrics_v1")
+    parser.add_argument("--fourframe-dir", type=Path, default=ROOT / "4frame_view" / "scenario3_metrics_v1")
+    return parser.parse_args()
+
+
+ARGS = parse_args()
 
 # This is the ONLY source CSV used by this script.
 # All output CSVs are built from this decoded-clean file.
-INPUT_CSV = ROOT / "data" / "processed" / "decoded_clean_PedNYC1_scenario3.csv"
+INPUT_CSV = ARGS.input_csv
 
-OUTPUT_CSV = ROOT / "data" / "processed" / "features_PedNYC1_scenario3_metrics_v1.csv"
-SEGMENT_CSV = ROOT / "data" / "processed" / "segments_PedNYC1_scenario3_v1.csv"
+OUTPUT_CSV = ARGS.output_csv
+SEGMENT_CSV = ARGS.segment_csv
 
-GRAPH_DIR = ROOT / "outputs" / "graphs" / "scenario3_metrics_v1"
-FOURFRAME_DIR = ROOT / "4frame_view" / "scenario3_metrics_v1"
+GRAPH_DIR = ARGS.graph_dir
+FOURFRAME_DIR = ARGS.fourframe_dir
 
 OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
 SEGMENT_CSV.parent.mkdir(parents=True, exist_ok=True)
