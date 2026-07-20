@@ -73,6 +73,10 @@ class DatasetConfig:
         """Create and return the participant graph directory."""
         return self._mkdir(self.base_dir / "outputs" / "graphs" / f"pednyc{int(pid)}")
 
+    def get_scenario_graphs_dir(self, pid: int, scenario: str) -> Path:
+        """Create and return the graph directory for one participant scenario."""
+        return self._mkdir(self.get_graphs_dir(pid) / f"scenario{scenario}")
+
     def get_animations_dir(self, pid: int) -> Path:
         """Create and return the participant animation directory."""
         return self._mkdir(self.base_dir / "outputs" / "animations" / f"pednyc{int(pid)}")

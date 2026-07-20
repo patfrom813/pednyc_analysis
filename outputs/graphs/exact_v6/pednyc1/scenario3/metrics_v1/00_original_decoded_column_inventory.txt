@@ -1,0 +1,1006 @@
+000: GameTime
+001: ScenarioTime
+002: FrameRate
+003: FrameRate-XRDevice
+004: Frame Number
+005: B VR Pos X
+006: B VR Pos Y
+007: B VR Pos Z
+008: B VR Rot X
+009: B VR Rot Y
+010: B VR Rot Z
+011: B XR Origin Pos X
+012: B XR Origin Pos Y
+013: B XR Origin Pos Z
+014: B XR Origin  Rot X
+015: B XR Origin  Rot Y
+016: B XR Origin  Rot Z
+017: A VR Pos X
+018: A VR Pos Y
+019: A VR Pos Z
+020: A VR Rot X
+021: A VR Rot Y
+022: A VR Rot Z
+023: A XR Origin Pos X
+024: A XR Origin Pos Y
+025: A XR Origin Pos Z
+026: A XR Origin  Rot X
+027: A XR Origin  Rot Y
+028: A XR Origin  Rot Z
+029: A car Pos X
+030: A car Pos Y
+031: A car Pos Z
+032: A car Rot X
+033: A car Rot Y
+034: A car Rot Z
+035: A accel
+036: A steering
+037: A velocity
+038: A indicators
+039: A Horn Button
+040: B Avatar Pos X
+041: B Avatar Pos Y
+042: B Avatar Pos Z
+043: B Avatar Rot X
+044: B Avatar Rot Y
+045: B Avatar Rot Z
+046: B  Bone Pos Hips X
+047: B  Bone Pos Hips Y
+048: B  Bone Pos Hips Z
+049: B  Bone Rot Hips X
+050: B  Bone Rot Hips Y
+051: B  Bone Rot Hips Z
+052: B  Bone Pos LeftUpperLeg X
+053: B  Bone Pos LeftUpperLeg Y
+054: B  Bone Pos LeftUpperLeg Z
+055: B  Bone Rot LeftUpperLeg X
+056: B  Bone Rot LeftUpperLeg Y
+057: B  Bone Rot LeftUpperLeg Z
+058: B  Bone Pos RightUpperLeg X
+059: B  Bone Pos RightUpperLeg Y
+060: B  Bone Pos RightUpperLeg Z
+061: B  Bone Rot RightUpperLeg X
+062: B  Bone Rot RightUpperLeg Y
+063: B  Bone Rot RightUpperLeg Z
+064: B  Bone Pos LeftLowerLeg X
+065: B  Bone Pos LeftLowerLeg Y
+066: B  Bone Pos LeftLowerLeg Z
+067: B  Bone Rot LeftLowerLeg X
+068: B  Bone Rot LeftLowerLeg Y
+069: B  Bone Rot LeftLowerLeg Z
+070: B  Bone Pos RightLowerLeg X
+071: B  Bone Pos RightLowerLeg Y
+072: B  Bone Pos RightLowerLeg Z
+073: B  Bone Rot RightLowerLeg X
+074: B  Bone Rot RightLowerLeg Y
+075: B  Bone Rot RightLowerLeg Z
+076: B  Bone Pos LeftFoot X
+077: B  Bone Pos LeftFoot Y
+078: B  Bone Pos LeftFoot Z
+079: B  Bone Rot LeftFoot X
+080: B  Bone Rot LeftFoot Y
+081: B  Bone Rot LeftFoot Z
+082: B  Bone Pos RightFoot X
+083: B  Bone Pos RightFoot Y
+084: B  Bone Pos RightFoot Z
+085: B  Bone Rot RightFoot X
+086: B  Bone Rot RightFoot Y
+087: B  Bone Rot RightFoot Z
+088: B  Bone Pos Spine X
+089: B  Bone Pos Spine Y
+090: B  Bone Pos Spine Z
+091: B  Bone Rot Spine X
+092: B  Bone Rot Spine Y
+093: B  Bone Rot Spine Z
+094: B  Bone Pos Chest X
+095: B  Bone Pos Chest Y
+096: B  Bone Pos Chest Z
+097: B  Bone Rot Chest X
+098: B  Bone Rot Chest Y
+099: B  Bone Rot Chest Z
+100: B  Bone Pos Neck X
+101: B  Bone Pos Neck Y
+102: B  Bone Pos Neck Z
+103: B  Bone Rot Neck X
+104: B  Bone Rot Neck Y
+105: B  Bone Rot Neck Z
+106: B  Bone Pos Head X
+107: B  Bone Pos Head Y
+108: B  Bone Pos Head Z
+109: B  Bone Rot Head X
+110: B  Bone Rot Head Y
+111: B  Bone Rot Head Z
+112: B  Bone Pos LeftShoulder X
+113: B  Bone Pos LeftShoulder Y
+114: B  Bone Pos LeftShoulder Z
+115: B  Bone Rot LeftShoulder X
+116: B  Bone Rot LeftShoulder Y
+117: B  Bone Rot LeftShoulder Z
+118: B  Bone Pos RightShoulder X
+119: B  Bone Pos RightShoulder Y
+120: B  Bone Pos RightShoulder Z
+121: B  Bone Rot RightShoulder X
+122: B  Bone Rot RightShoulder Y
+123: B  Bone Rot RightShoulder Z
+124: B  Bone Pos LeftUpperArm X
+125: B  Bone Pos LeftUpperArm Y
+126: B  Bone Pos LeftUpperArm Z
+127: B  Bone Rot LeftUpperArm X
+128: B  Bone Rot LeftUpperArm Y
+129: B  Bone Rot LeftUpperArm Z
+130: B  Bone Pos RightUpperArm X
+131: B  Bone Pos RightUpperArm Y
+132: B  Bone Pos RightUpperArm Z
+133: B  Bone Rot RightUpperArm X
+134: B  Bone Rot RightUpperArm Y
+135: B  Bone Rot RightUpperArm Z
+136: B  Bone Pos LeftLowerArm X
+137: B  Bone Pos LeftLowerArm Y
+138: B  Bone Pos LeftLowerArm Z
+139: B  Bone Rot LeftLowerArm X
+140: B  Bone Rot LeftLowerArm Y
+141: B  Bone Rot LeftLowerArm Z
+142: B  Bone Pos RightLowerArm X
+143: B  Bone Pos RightLowerArm Y
+144: B  Bone Pos RightLowerArm Z
+145: B  Bone Rot RightLowerArm X
+146: B  Bone Rot RightLowerArm Y
+147: B  Bone Rot RightLowerArm Z
+148: B  Bone Pos LeftHand X
+149: B  Bone Pos LeftHand Y
+150: B  Bone Pos LeftHand Z
+151: B  Bone Rot LeftHand X
+152: B  Bone Rot LeftHand Y
+153: B  Bone Rot LeftHand Z
+154: B  Bone Pos RightHand X
+155: B  Bone Pos RightHand Y
+156: B  Bone Pos RightHand Z
+157: B  Bone Rot RightHand X
+158: B  Bone Rot RightHand Y
+159: B  Bone Rot RightHand Z
+160: B  Bone Pos LeftToes X
+161: B  Bone Pos LeftToes Y
+162: B  Bone Pos LeftToes Z
+163: B  Bone Rot LeftToes X
+164: B  Bone Rot LeftToes Y
+165: B  Bone Rot LeftToes Z
+166: B  Bone Pos RightToes X
+167: B  Bone Pos RightToes Y
+168: B  Bone Pos RightToes Z
+169: B  Bone Rot RightToes X
+170: B  Bone Rot RightToes Y
+171: B  Bone Rot RightToes Z
+172: B  Bone Pos LeftThumbProximal X
+173: B  Bone Pos LeftThumbProximal Y
+174: B  Bone Pos LeftThumbProximal Z
+175: B  Bone Rot LeftThumbProximal X
+176: B  Bone Rot LeftThumbProximal Y
+177: B  Bone Rot LeftThumbProximal Z
+178: B  Bone Pos LeftThumbIntermediate X
+179: B  Bone Pos LeftThumbIntermediate Y
+180: B  Bone Pos LeftThumbIntermediate Z
+181: B  Bone Rot LeftThumbIntermediate X
+182: B  Bone Rot LeftThumbIntermediate Y
+183: B  Bone Rot LeftThumbIntermediate Z
+184: B  Bone Pos LeftThumbDistal X
+185: B  Bone Pos LeftThumbDistal Y
+186: B  Bone Pos LeftThumbDistal Z
+187: B  Bone Rot LeftThumbDistal X
+188: B  Bone Rot LeftThumbDistal Y
+189: B  Bone Rot LeftThumbDistal Z
+190: B  Bone Pos LeftIndexProximal X
+191: B  Bone Pos LeftIndexProximal Y
+192: B  Bone Pos LeftIndexProximal Z
+193: B  Bone Rot LeftIndexProximal X
+194: B  Bone Rot LeftIndexProximal Y
+195: B  Bone Rot LeftIndexProximal Z
+196: B  Bone Pos LeftIndexIntermediate X
+197: B  Bone Pos LeftIndexIntermediate Y
+198: B  Bone Pos LeftIndexIntermediate Z
+199: B  Bone Rot LeftIndexIntermediate X
+200: B  Bone Rot LeftIndexIntermediate Y
+201: B  Bone Rot LeftIndexIntermediate Z
+202: B  Bone Pos LeftIndexDistal X
+203: B  Bone Pos LeftIndexDistal Y
+204: B  Bone Pos LeftIndexDistal Z
+205: B  Bone Rot LeftIndexDistal X
+206: B  Bone Rot LeftIndexDistal Y
+207: B  Bone Rot LeftIndexDistal Z
+208: B  Bone Pos LeftMiddleProximal X
+209: B  Bone Pos LeftMiddleProximal Y
+210: B  Bone Pos LeftMiddleProximal Z
+211: B  Bone Rot LeftMiddleProximal X
+212: B  Bone Rot LeftMiddleProximal Y
+213: B  Bone Rot LeftMiddleProximal Z
+214: B  Bone Pos LeftMiddleIntermediate X
+215: B  Bone Pos LeftMiddleIntermediate Y
+216: B  Bone Pos LeftMiddleIntermediate Z
+217: B  Bone Rot LeftMiddleIntermediate X
+218: B  Bone Rot LeftMiddleIntermediate Y
+219: B  Bone Rot LeftMiddleIntermediate Z
+220: B  Bone Pos LeftMiddleDistal X
+221: B  Bone Pos LeftMiddleDistal Y
+222: B  Bone Pos LeftMiddleDistal Z
+223: B  Bone Rot LeftMiddleDistal X
+224: B  Bone Rot LeftMiddleDistal Y
+225: B  Bone Rot LeftMiddleDistal Z
+226: B  Bone Pos LeftRingProximal X
+227: B  Bone Pos LeftRingProximal Y
+228: B  Bone Pos LeftRingProximal Z
+229: B  Bone Rot LeftRingProximal X
+230: B  Bone Rot LeftRingProximal Y
+231: B  Bone Rot LeftRingProximal Z
+232: B  Bone Pos LeftRingIntermediate X
+233: B  Bone Pos LeftRingIntermediate Y
+234: B  Bone Pos LeftRingIntermediate Z
+235: B  Bone Rot LeftRingIntermediate X
+236: B  Bone Rot LeftRingIntermediate Y
+237: B  Bone Rot LeftRingIntermediate Z
+238: B  Bone Pos LeftRingDistal X
+239: B  Bone Pos LeftRingDistal Y
+240: B  Bone Pos LeftRingDistal Z
+241: B  Bone Rot LeftRingDistal X
+242: B  Bone Rot LeftRingDistal Y
+243: B  Bone Rot LeftRingDistal Z
+244: B  Bone Pos LeftLittleProximal X
+245: B  Bone Pos LeftLittleProximal Y
+246: B  Bone Pos LeftLittleProximal Z
+247: B  Bone Rot LeftLittleProximal X
+248: B  Bone Rot LeftLittleProximal Y
+249: B  Bone Rot LeftLittleProximal Z
+250: B  Bone Pos LeftLittleIntermediate X
+251: B  Bone Pos LeftLittleIntermediate Y
+252: B  Bone Pos LeftLittleIntermediate Z
+253: B  Bone Rot LeftLittleIntermediate X
+254: B  Bone Rot LeftLittleIntermediate Y
+255: B  Bone Rot LeftLittleIntermediate Z
+256: B  Bone Pos LeftLittleDistal X
+257: B  Bone Pos LeftLittleDistal Y
+258: B  Bone Pos LeftLittleDistal Z
+259: B  Bone Rot LeftLittleDistal X
+260: B  Bone Rot LeftLittleDistal Y
+261: B  Bone Rot LeftLittleDistal Z
+262: B  Bone Pos RightThumbProximal X
+263: B  Bone Pos RightThumbProximal Y
+264: B  Bone Pos RightThumbProximal Z
+265: B  Bone Rot RightThumbProximal X
+266: B  Bone Rot RightThumbProximal Y
+267: B  Bone Rot RightThumbProximal Z
+268: B  Bone Pos RightThumbIntermediate X
+269: B  Bone Pos RightThumbIntermediate Y
+270: B  Bone Pos RightThumbIntermediate Z
+271: B  Bone Rot RightThumbIntermediate X
+272: B  Bone Rot RightThumbIntermediate Y
+273: B  Bone Rot RightThumbIntermediate Z
+274: B  Bone Pos RightThumbDistal X
+275: B  Bone Pos RightThumbDistal Y
+276: B  Bone Pos RightThumbDistal Z
+277: B  Bone Rot RightThumbDistal X
+278: B  Bone Rot RightThumbDistal Y
+279: B  Bone Rot RightThumbDistal Z
+280: B  Bone Pos RightIndexProximal X
+281: B  Bone Pos RightIndexProximal Y
+282: B  Bone Pos RightIndexProximal Z
+283: B  Bone Rot RightIndexProximal X
+284: B  Bone Rot RightIndexProximal Y
+285: B  Bone Rot RightIndexProximal Z
+286: B  Bone Pos RightIndexIntermediate X
+287: B  Bone Pos RightIndexIntermediate Y
+288: B  Bone Pos RightIndexIntermediate Z
+289: B  Bone Rot RightIndexIntermediate X
+290: B  Bone Rot RightIndexIntermediate Y
+291: B  Bone Rot RightIndexIntermediate Z
+292: B  Bone Pos RightIndexDistal X
+293: B  Bone Pos RightIndexDistal Y
+294: B  Bone Pos RightIndexDistal Z
+295: B  Bone Rot RightIndexDistal X
+296: B  Bone Rot RightIndexDistal Y
+297: B  Bone Rot RightIndexDistal Z
+298: B  Bone Pos RightMiddleProximal X
+299: B  Bone Pos RightMiddleProximal Y
+300: B  Bone Pos RightMiddleProximal Z
+301: B  Bone Rot RightMiddleProximal X
+302: B  Bone Rot RightMiddleProximal Y
+303: B  Bone Rot RightMiddleProximal Z
+304: B  Bone Pos RightMiddleIntermediate X
+305: B  Bone Pos RightMiddleIntermediate Y
+306: B  Bone Pos RightMiddleIntermediate Z
+307: B  Bone Rot RightMiddleIntermediate X
+308: B  Bone Rot RightMiddleIntermediate Y
+309: B  Bone Rot RightMiddleIntermediate Z
+310: B  Bone Pos RightMiddleDistal X
+311: B  Bone Pos RightMiddleDistal Y
+312: B  Bone Pos RightMiddleDistal Z
+313: B  Bone Rot RightMiddleDistal X
+314: B  Bone Rot RightMiddleDistal Y
+315: B  Bone Rot RightMiddleDistal Z
+316: B  Bone Pos RightRingProximal X
+317: B  Bone Pos RightRingProximal Y
+318: B  Bone Pos RightRingProximal Z
+319: B  Bone Rot RightRingProximal X
+320: B  Bone Rot RightRingProximal Y
+321: B  Bone Rot RightRingProximal Z
+322: B  Bone Pos RightRingIntermediate X
+323: B  Bone Pos RightRingIntermediate Y
+324: B  Bone Pos RightRingIntermediate Z
+325: B  Bone Rot RightRingIntermediate X
+326: B  Bone Rot RightRingIntermediate Y
+327: B  Bone Rot RightRingIntermediate Z
+328: B  Bone Pos RightRingDistal X
+329: B  Bone Pos RightRingDistal Y
+330: B  Bone Pos RightRingDistal Z
+331: B  Bone Rot RightRingDistal X
+332: B  Bone Rot RightRingDistal Y
+333: B  Bone Rot RightRingDistal Z
+334: B  Bone Pos RightLittleProximal X
+335: B  Bone Pos RightLittleProximal Y
+336: B  Bone Pos RightLittleProximal Z
+337: B  Bone Rot RightLittleProximal X
+338: B  Bone Rot RightLittleProximal Y
+339: B  Bone Rot RightLittleProximal Z
+340: B  Bone Pos RightLittleIntermediate X
+341: B  Bone Pos RightLittleIntermediate Y
+342: B  Bone Pos RightLittleIntermediate Z
+343: B  Bone Rot RightLittleIntermediate X
+344: B  Bone Rot RightLittleIntermediate Y
+345: B  Bone Rot RightLittleIntermediate Z
+346: B  Bone Pos RightLittleDistal X
+347: B  Bone Pos RightLittleDistal Y
+348: B  Bone Pos RightLittleDistal Z
+349: B  Bone Rot RightLittleDistal X
+350: B  Bone Rot RightLittleDistal Y
+351: B  Bone Rot RightLittleDistal Z
+352: B  Bone Pos UpperChest X
+353: B  Bone Pos UpperChest Y
+354: B  Bone Pos UpperChest Z
+355: B  Bone Rot UpperChest X
+356: B  Bone Rot UpperChest Y
+357: B  Bone Rot UpperChest Z
+358: B Root Hand Pos Right X
+359: B Root Hand Pos Right Y
+360: B Root Hand Pos Right Z
+361: B Root Hand Rot Right X
+362: B Root Hand Rot Right Y
+363: B Root Hand Rot Right Z
+364: B Hand Bone Pos Wrist Right X
+365: B Hand Bone Pos Wrist Right Y
+366: B Hand Bone Pos Wrist Right Z
+367: B Hand Bone Rot Wrist Right X
+368: B Hand Bone Rot Wrist Right Y
+369: B Hand Bone Rot Wrist Right Z
+370: B Hand Bone Pos IndexMetacarpal Right X
+371: B Hand Bone Pos IndexMetacarpal Right Y
+372: B Hand Bone Pos IndexMetacarpal Right Z
+373: B Hand Bone Rot IndexMetacarpal Right X
+374: B Hand Bone Rot IndexMetacarpal Right Y
+375: B Hand Bone Rot IndexMetacarpal Right Z
+376: B Hand Bone Pos IndexProximal Right X
+377: B Hand Bone Pos IndexProximal Right Y
+378: B Hand Bone Pos IndexProximal Right Z
+379: B Hand Bone Rot IndexProximal Right X
+380: B Hand Bone Rot IndexProximal Right Y
+381: B Hand Bone Rot IndexProximal Right Z
+382: B Hand Bone Pos IndexIntermediate Right X
+383: B Hand Bone Pos IndexIntermediate Right Y
+384: B Hand Bone Pos IndexIntermediate Right Z
+385: B Hand Bone Rot IndexIntermediate Right X
+386: B Hand Bone Rot IndexIntermediate Right Y
+387: B Hand Bone Rot IndexIntermediate Right Z
+388: B Hand Bone Pos IndexDistal Right X
+389: B Hand Bone Pos IndexDistal Right Y
+390: B Hand Bone Pos IndexDistal Right Z
+391: B Hand Bone Rot IndexDistal Right X
+392: B Hand Bone Rot IndexDistal Right Y
+393: B Hand Bone Rot IndexDistal Right Z
+394: B Hand Bone Pos IndexTip Right X
+395: B Hand Bone Pos IndexTip Right Y
+396: B Hand Bone Pos IndexTip Right Z
+397: B Hand Bone Rot IndexTip Right X
+398: B Hand Bone Rot IndexTip Right Y
+399: B Hand Bone Rot IndexTip Right Z
+400: B Hand Bone Pos LittleMetacarpal Right X
+401: B Hand Bone Pos LittleMetacarpal Right Y
+402: B Hand Bone Pos LittleMetacarpal Right Z
+403: B Hand Bone Rot LittleMetacarpal Right X
+404: B Hand Bone Rot LittleMetacarpal Right Y
+405: B Hand Bone Rot LittleMetacarpal Right Z
+406: B Hand Bone Pos LittleProximal Right X
+407: B Hand Bone Pos LittleProximal Right Y
+408: B Hand Bone Pos LittleProximal Right Z
+409: B Hand Bone Rot LittleProximal Right X
+410: B Hand Bone Rot LittleProximal Right Y
+411: B Hand Bone Rot LittleProximal Right Z
+412: B Hand Bone Pos LittleIntermediate Right X
+413: B Hand Bone Pos LittleIntermediate Right Y
+414: B Hand Bone Pos LittleIntermediate Right Z
+415: B Hand Bone Rot LittleIntermediate Right X
+416: B Hand Bone Rot LittleIntermediate Right Y
+417: B Hand Bone Rot LittleIntermediate Right Z
+418: B Hand Bone Pos LittleDistal Right X
+419: B Hand Bone Pos LittleDistal Right Y
+420: B Hand Bone Pos LittleDistal Right Z
+421: B Hand Bone Rot LittleDistal Right X
+422: B Hand Bone Rot LittleDistal Right Y
+423: B Hand Bone Rot LittleDistal Right Z
+424: B Hand Bone Pos LittleTip Right X
+425: B Hand Bone Pos LittleTip Right Y
+426: B Hand Bone Pos LittleTip Right Z
+427: B Hand Bone Rot LittleTip Right X
+428: B Hand Bone Rot LittleTip Right Y
+429: B Hand Bone Rot LittleTip Right Z
+430: B Hand Bone Pos MiddleMetacarpal Right X
+431: B Hand Bone Pos MiddleMetacarpal Right Y
+432: B Hand Bone Pos MiddleMetacarpal Right Z
+433: B Hand Bone Rot MiddleMetacarpal Right X
+434: B Hand Bone Rot MiddleMetacarpal Right Y
+435: B Hand Bone Rot MiddleMetacarpal Right Z
+436: B Hand Bone Pos MiddleProximal Right X
+437: B Hand Bone Pos MiddleProximal Right Y
+438: B Hand Bone Pos MiddleProximal Right Z
+439: B Hand Bone Rot MiddleProximal Right X
+440: B Hand Bone Rot MiddleProximal Right Y
+441: B Hand Bone Rot MiddleProximal Right Z
+442: B Hand Bone Pos MiddleIntermediate Right X
+443: B Hand Bone Pos MiddleIntermediate Right Y
+444: B Hand Bone Pos MiddleIntermediate Right Z
+445: B Hand Bone Rot MiddleIntermediate Right X
+446: B Hand Bone Rot MiddleIntermediate Right Y
+447: B Hand Bone Rot MiddleIntermediate Right Z
+448: B Hand Bone Pos MiddleDistal Right X
+449: B Hand Bone Pos MiddleDistal Right Y
+450: B Hand Bone Pos MiddleDistal Right Z
+451: B Hand Bone Rot MiddleDistal Right X
+452: B Hand Bone Rot MiddleDistal Right Y
+453: B Hand Bone Rot MiddleDistal Right Z
+454: B Hand Bone Pos MiddleTip Right X
+455: B Hand Bone Pos MiddleTip Right Y
+456: B Hand Bone Pos MiddleTip Right Z
+457: B Hand Bone Rot MiddleTip Right X
+458: B Hand Bone Rot MiddleTip Right Y
+459: B Hand Bone Rot MiddleTip Right Z
+460: B Hand Bone Pos RingMetacarpal Right X
+461: B Hand Bone Pos RingMetacarpal Right Y
+462: B Hand Bone Pos RingMetacarpal Right Z
+463: B Hand Bone Rot RingMetacarpal Right X
+464: B Hand Bone Rot RingMetacarpal Right Y
+465: B Hand Bone Rot RingMetacarpal Right Z
+466: B Hand Bone Pos RingProximal Right X
+467: B Hand Bone Pos RingProximal Right Y
+468: B Hand Bone Pos RingProximal Right Z
+469: B Hand Bone Rot RingProximal Right X
+470: B Hand Bone Rot RingProximal Right Y
+471: B Hand Bone Rot RingProximal Right Z
+472: B Hand Bone Pos RingIntermediate Right X
+473: B Hand Bone Pos RingIntermediate Right Y
+474: B Hand Bone Pos RingIntermediate Right Z
+475: B Hand Bone Rot RingIntermediate Right X
+476: B Hand Bone Rot RingIntermediate Right Y
+477: B Hand Bone Rot RingIntermediate Right Z
+478: B Hand Bone Pos RingDistal Right X
+479: B Hand Bone Pos RingDistal Right Y
+480: B Hand Bone Pos RingDistal Right Z
+481: B Hand Bone Rot RingDistal Right X
+482: B Hand Bone Rot RingDistal Right Y
+483: B Hand Bone Rot RingDistal Right Z
+484: B Hand Bone Pos RingTip Right X
+485: B Hand Bone Pos RingTip Right Y
+486: B Hand Bone Pos RingTip Right Z
+487: B Hand Bone Rot RingTip Right X
+488: B Hand Bone Rot RingTip Right Y
+489: B Hand Bone Rot RingTip Right Z
+490: B Hand Bone Pos ThumbMetacarpal Right X
+491: B Hand Bone Pos ThumbMetacarpal Right Y
+492: B Hand Bone Pos ThumbMetacarpal Right Z
+493: B Hand Bone Rot ThumbMetacarpal Right X
+494: B Hand Bone Rot ThumbMetacarpal Right Y
+495: B Hand Bone Rot ThumbMetacarpal Right Z
+496: B Hand Bone Pos ThumbProximal Right X
+497: B Hand Bone Pos ThumbProximal Right Y
+498: B Hand Bone Pos ThumbProximal Right Z
+499: B Hand Bone Rot ThumbProximal Right X
+500: B Hand Bone Rot ThumbProximal Right Y
+501: B Hand Bone Rot ThumbProximal Right Z
+502: B Hand Bone Pos ThumbDistal Right X
+503: B Hand Bone Pos ThumbDistal Right Y
+504: B Hand Bone Pos ThumbDistal Right Z
+505: B Hand Bone Rot ThumbDistal Right X
+506: B Hand Bone Rot ThumbDistal Right Y
+507: B Hand Bone Rot ThumbDistal Right Z
+508: B Hand Bone Pos ThumbTip Right X
+509: B Hand Bone Pos ThumbTip Right Y
+510: B Hand Bone Pos ThumbTip Right Z
+511: B Hand Bone Rot ThumbTip Right X
+512: B Hand Bone Rot ThumbTip Right Y
+513: B Hand Bone Rot ThumbTip Right Z
+514: B Hand Bone Pos Palm Right X
+515: B Hand Bone Pos Palm Right Y
+516: B Hand Bone Pos Palm Right Z
+517: B Hand Bone Rot Palm Right X
+518: B Hand Bone Rot Palm Right Y
+519: B Hand Bone Rot Palm Right Z
+520: B Root Hand Pos Left X
+521: B Root Hand Pos Left Y
+522: B Root Hand Pos Left Z
+523: B Root Hand Rot Left X
+524: B Root Hand Rot Left Y
+525: B Root Hand Rot Left Z
+526: B Hand Bone Pos Wrist Left X
+527: B Hand Bone Pos Wrist Left Y
+528: B Hand Bone Pos Wrist Left Z
+529: B Hand Bone Rot Wrist Left X
+530: B Hand Bone Rot Wrist Left Y
+531: B Hand Bone Rot Wrist Left Z
+532: B Hand Bone Pos IndexMetacarpal Left X
+533: B Hand Bone Pos IndexMetacarpal Left Y
+534: B Hand Bone Pos IndexMetacarpal Left Z
+535: B Hand Bone Rot IndexMetacarpal Left X
+536: B Hand Bone Rot IndexMetacarpal Left Y
+537: B Hand Bone Rot IndexMetacarpal Left Z
+538: B Hand Bone Pos IndexProximal Left X
+539: B Hand Bone Pos IndexProximal Left Y
+540: B Hand Bone Pos IndexProximal Left Z
+541: B Hand Bone Rot IndexProximal Left X
+542: B Hand Bone Rot IndexProximal Left Y
+543: B Hand Bone Rot IndexProximal Left Z
+544: B Hand Bone Pos IndexIntermediate Left X
+545: B Hand Bone Pos IndexIntermediate Left Y
+546: B Hand Bone Pos IndexIntermediate Left Z
+547: B Hand Bone Rot IndexIntermediate Left X
+548: B Hand Bone Rot IndexIntermediate Left Y
+549: B Hand Bone Rot IndexIntermediate Left Z
+550: B Hand Bone Pos IndexDistal Left X
+551: B Hand Bone Pos IndexDistal Left Y
+552: B Hand Bone Pos IndexDistal Left Z
+553: B Hand Bone Rot IndexDistal Left X
+554: B Hand Bone Rot IndexDistal Left Y
+555: B Hand Bone Rot IndexDistal Left Z
+556: B Hand Bone Pos IndexTip Left X
+557: B Hand Bone Pos IndexTip Left Y
+558: B Hand Bone Pos IndexTip Left Z
+559: B Hand Bone Rot IndexTip Left X
+560: B Hand Bone Rot IndexTip Left Y
+561: B Hand Bone Rot IndexTip Left Z
+562: B Hand Bone Pos LittleMetacarpal Left X
+563: B Hand Bone Pos LittleMetacarpal Left Y
+564: B Hand Bone Pos LittleMetacarpal Left Z
+565: B Hand Bone Rot LittleMetacarpal Left X
+566: B Hand Bone Rot LittleMetacarpal Left Y
+567: B Hand Bone Rot LittleMetacarpal Left Z
+568: B Hand Bone Pos LittleProximal Left X
+569: B Hand Bone Pos LittleProximal Left Y
+570: B Hand Bone Pos LittleProximal Left Z
+571: B Hand Bone Rot LittleProximal Left X
+572: B Hand Bone Rot LittleProximal Left Y
+573: B Hand Bone Rot LittleProximal Left Z
+574: B Hand Bone Pos LittleIntermediate Left X
+575: B Hand Bone Pos LittleIntermediate Left Y
+576: B Hand Bone Pos LittleIntermediate Left Z
+577: B Hand Bone Rot LittleIntermediate Left X
+578: B Hand Bone Rot LittleIntermediate Left Y
+579: B Hand Bone Rot LittleIntermediate Left Z
+580: B Hand Bone Pos LittleDistal Left X
+581: B Hand Bone Pos LittleDistal Left Y
+582: B Hand Bone Pos LittleDistal Left Z
+583: B Hand Bone Rot LittleDistal Left X
+584: B Hand Bone Rot LittleDistal Left Y
+585: B Hand Bone Rot LittleDistal Left Z
+586: B Hand Bone Pos LittleTip Left X
+587: B Hand Bone Pos LittleTip Left Y
+588: B Hand Bone Pos LittleTip Left Z
+589: B Hand Bone Rot LittleTip Left X
+590: B Hand Bone Rot LittleTip Left Y
+591: B Hand Bone Rot LittleTip Left Z
+592: B Hand Bone Pos MiddleMetacarpal Left X
+593: B Hand Bone Pos MiddleMetacarpal Left Y
+594: B Hand Bone Pos MiddleMetacarpal Left Z
+595: B Hand Bone Rot MiddleMetacarpal Left X
+596: B Hand Bone Rot MiddleMetacarpal Left Y
+597: B Hand Bone Rot MiddleMetacarpal Left Z
+598: B Hand Bone Pos MiddleProximal Left X
+599: B Hand Bone Pos MiddleProximal Left Y
+600: B Hand Bone Pos MiddleProximal Left Z
+601: B Hand Bone Rot MiddleProximal Left X
+602: B Hand Bone Rot MiddleProximal Left Y
+603: B Hand Bone Rot MiddleProximal Left Z
+604: B Hand Bone Pos MiddleIntermediate Left X
+605: B Hand Bone Pos MiddleIntermediate Left Y
+606: B Hand Bone Pos MiddleIntermediate Left Z
+607: B Hand Bone Rot MiddleIntermediate Left X
+608: B Hand Bone Rot MiddleIntermediate Left Y
+609: B Hand Bone Rot MiddleIntermediate Left Z
+610: B Hand Bone Pos MiddleDistal Left X
+611: B Hand Bone Pos MiddleDistal Left Y
+612: B Hand Bone Pos MiddleDistal Left Z
+613: B Hand Bone Rot MiddleDistal Left X
+614: B Hand Bone Rot MiddleDistal Left Y
+615: B Hand Bone Rot MiddleDistal Left Z
+616: B Hand Bone Pos MiddleTip Left X
+617: B Hand Bone Pos MiddleTip Left Y
+618: B Hand Bone Pos MiddleTip Left Z
+619: B Hand Bone Rot MiddleTip Left X
+620: B Hand Bone Rot MiddleTip Left Y
+621: B Hand Bone Rot MiddleTip Left Z
+622: B Hand Bone Pos RingMetacarpal Left X
+623: B Hand Bone Pos RingMetacarpal Left Y
+624: B Hand Bone Pos RingMetacarpal Left Z
+625: B Hand Bone Rot RingMetacarpal Left X
+626: B Hand Bone Rot RingMetacarpal Left Y
+627: B Hand Bone Rot RingMetacarpal Left Z
+628: B Hand Bone Pos RingProximal Left X
+629: B Hand Bone Pos RingProximal Left Y
+630: B Hand Bone Pos RingProximal Left Z
+631: B Hand Bone Rot RingProximal Left X
+632: B Hand Bone Rot RingProximal Left Y
+633: B Hand Bone Rot RingProximal Left Z
+634: B Hand Bone Pos RingIntermediate Left X
+635: B Hand Bone Pos RingIntermediate Left Y
+636: B Hand Bone Pos RingIntermediate Left Z
+637: B Hand Bone Rot RingIntermediate Left X
+638: B Hand Bone Rot RingIntermediate Left Y
+639: B Hand Bone Rot RingIntermediate Left Z
+640: B Hand Bone Pos RingDistal Left X
+641: B Hand Bone Pos RingDistal Left Y
+642: B Hand Bone Pos RingDistal Left Z
+643: B Hand Bone Rot RingDistal Left X
+644: B Hand Bone Rot RingDistal Left Y
+645: B Hand Bone Rot RingDistal Left Z
+646: B Hand Bone Pos RingTip Left X
+647: B Hand Bone Pos RingTip Left Y
+648: B Hand Bone Pos RingTip Left Z
+649: B Hand Bone Rot RingTip Left X
+650: B Hand Bone Rot RingTip Left Y
+651: B Hand Bone Rot RingTip Left Z
+652: B Hand Bone Pos ThumbMetacarpal Left X
+653: B Hand Bone Pos ThumbMetacarpal Left Y
+654: B Hand Bone Pos ThumbMetacarpal Left Z
+655: B Hand Bone Rot ThumbMetacarpal Left X
+656: B Hand Bone Rot ThumbMetacarpal Left Y
+657: B Hand Bone Rot ThumbMetacarpal Left Z
+658: B Hand Bone Pos ThumbProximal Left X
+659: B Hand Bone Pos ThumbProximal Left Y
+660: B Hand Bone Pos ThumbProximal Left Z
+661: B Hand Bone Rot ThumbProximal Left X
+662: B Hand Bone Rot ThumbProximal Left Y
+663: B Hand Bone Rot ThumbProximal Left Z
+664: B Hand Bone Pos ThumbDistal Left X
+665: B Hand Bone Pos ThumbDistal Left Y
+666: B Hand Bone Pos ThumbDistal Left Z
+667: B Hand Bone Rot ThumbDistal Left X
+668: B Hand Bone Rot ThumbDistal Left Y
+669: B Hand Bone Rot ThumbDistal Left Z
+670: B Hand Bone Pos ThumbTip Left X
+671: B Hand Bone Pos ThumbTip Left Y
+672: B Hand Bone Pos ThumbTip Left Z
+673: B Hand Bone Rot ThumbTip Left X
+674: B Hand Bone Rot ThumbTip Left Y
+675: B Hand Bone Rot ThumbTip Left Z
+676: B Hand Bone Pos Palm Left X
+677: B Hand Bone Pos Palm Left Y
+678: B Hand Bone Pos Palm Left Z
+679: B Hand Bone Rot Palm Left X
+680: B Hand Bone Rot Palm Left Y
+681: B Hand Bone Rot Palm Left Z
+682: A Root Hand Pos Right X
+683: A Root Hand Pos Right Y
+684: A Root Hand Pos Right Z
+685: A Root Hand Rot Right X
+686: A Root Hand Rot Right Y
+687: A Root Hand Rot Right Z
+688: A Hand Bone Pos Wrist Right X
+689: A Hand Bone Pos Wrist Right Y
+690: A Hand Bone Pos Wrist Right Z
+691: A Hand Bone Rot Wrist Right X
+692: A Hand Bone Rot Wrist Right Y
+693: A Hand Bone Rot Wrist Right Z
+694: A Hand Bone Pos IndexMetacarpal Right X
+695: A Hand Bone Pos IndexMetacarpal Right Y
+696: A Hand Bone Pos IndexMetacarpal Right Z
+697: A Hand Bone Rot IndexMetacarpal Right X
+698: A Hand Bone Rot IndexMetacarpal Right Y
+699: A Hand Bone Rot IndexMetacarpal Right Z
+700: A Hand Bone Pos IndexProximal Right X
+701: A Hand Bone Pos IndexProximal Right Y
+702: A Hand Bone Pos IndexProximal Right Z
+703: A Hand Bone Rot IndexProximal Right X
+704: A Hand Bone Rot IndexProximal Right Y
+705: A Hand Bone Rot IndexProximal Right Z
+706: A Hand Bone Pos IndexIntermediate Right X
+707: A Hand Bone Pos IndexIntermediate Right Y
+708: A Hand Bone Pos IndexIntermediate Right Z
+709: A Hand Bone Rot IndexIntermediate Right X
+710: A Hand Bone Rot IndexIntermediate Right Y
+711: A Hand Bone Rot IndexIntermediate Right Z
+712: A Hand Bone Pos IndexDistal Right X
+713: A Hand Bone Pos IndexDistal Right Y
+714: A Hand Bone Pos IndexDistal Right Z
+715: A Hand Bone Rot IndexDistal Right X
+716: A Hand Bone Rot IndexDistal Right Y
+717: A Hand Bone Rot IndexDistal Right Z
+718: A Hand Bone Pos IndexTip Right X
+719: A Hand Bone Pos IndexTip Right Y
+720: A Hand Bone Pos IndexTip Right Z
+721: A Hand Bone Rot IndexTip Right X
+722: A Hand Bone Rot IndexTip Right Y
+723: A Hand Bone Rot IndexTip Right Z
+724: A Hand Bone Pos LittleMetacarpal Right X
+725: A Hand Bone Pos LittleMetacarpal Right Y
+726: A Hand Bone Pos LittleMetacarpal Right Z
+727: A Hand Bone Rot LittleMetacarpal Right X
+728: A Hand Bone Rot LittleMetacarpal Right Y
+729: A Hand Bone Rot LittleMetacarpal Right Z
+730: A Hand Bone Pos LittleProximal Right X
+731: A Hand Bone Pos LittleProximal Right Y
+732: A Hand Bone Pos LittleProximal Right Z
+733: A Hand Bone Rot LittleProximal Right X
+734: A Hand Bone Rot LittleProximal Right Y
+735: A Hand Bone Rot LittleProximal Right Z
+736: A Hand Bone Pos LittleIntermediate Right X
+737: A Hand Bone Pos LittleIntermediate Right Y
+738: A Hand Bone Pos LittleIntermediate Right Z
+739: A Hand Bone Rot LittleIntermediate Right X
+740: A Hand Bone Rot LittleIntermediate Right Y
+741: A Hand Bone Rot LittleIntermediate Right Z
+742: A Hand Bone Pos LittleDistal Right X
+743: A Hand Bone Pos LittleDistal Right Y
+744: A Hand Bone Pos LittleDistal Right Z
+745: A Hand Bone Rot LittleDistal Right X
+746: A Hand Bone Rot LittleDistal Right Y
+747: A Hand Bone Rot LittleDistal Right Z
+748: A Hand Bone Pos LittleTip Right X
+749: A Hand Bone Pos LittleTip Right Y
+750: A Hand Bone Pos LittleTip Right Z
+751: A Hand Bone Rot LittleTip Right X
+752: A Hand Bone Rot LittleTip Right Y
+753: A Hand Bone Rot LittleTip Right Z
+754: A Hand Bone Pos MiddleMetacarpal Right X
+755: A Hand Bone Pos MiddleMetacarpal Right Y
+756: A Hand Bone Pos MiddleMetacarpal Right Z
+757: A Hand Bone Rot MiddleMetacarpal Right X
+758: A Hand Bone Rot MiddleMetacarpal Right Y
+759: A Hand Bone Rot MiddleMetacarpal Right Z
+760: A Hand Bone Pos MiddleProximal Right X
+761: A Hand Bone Pos MiddleProximal Right Y
+762: A Hand Bone Pos MiddleProximal Right Z
+763: A Hand Bone Rot MiddleProximal Right X
+764: A Hand Bone Rot MiddleProximal Right Y
+765: A Hand Bone Rot MiddleProximal Right Z
+766: A Hand Bone Pos MiddleIntermediate Right X
+767: A Hand Bone Pos MiddleIntermediate Right Y
+768: A Hand Bone Pos MiddleIntermediate Right Z
+769: A Hand Bone Rot MiddleIntermediate Right X
+770: A Hand Bone Rot MiddleIntermediate Right Y
+771: A Hand Bone Rot MiddleIntermediate Right Z
+772: A Hand Bone Pos MiddleDistal Right X
+773: A Hand Bone Pos MiddleDistal Right Y
+774: A Hand Bone Pos MiddleDistal Right Z
+775: A Hand Bone Rot MiddleDistal Right X
+776: A Hand Bone Rot MiddleDistal Right Y
+777: A Hand Bone Rot MiddleDistal Right Z
+778: A Hand Bone Pos MiddleTip Right X
+779: A Hand Bone Pos MiddleTip Right Y
+780: A Hand Bone Pos MiddleTip Right Z
+781: A Hand Bone Rot MiddleTip Right X
+782: A Hand Bone Rot MiddleTip Right Y
+783: A Hand Bone Rot MiddleTip Right Z
+784: A Hand Bone Pos RingMetacarpal Right X
+785: A Hand Bone Pos RingMetacarpal Right Y
+786: A Hand Bone Pos RingMetacarpal Right Z
+787: A Hand Bone Rot RingMetacarpal Right X
+788: A Hand Bone Rot RingMetacarpal Right Y
+789: A Hand Bone Rot RingMetacarpal Right Z
+790: A Hand Bone Pos RingProximal Right X
+791: A Hand Bone Pos RingProximal Right Y
+792: A Hand Bone Pos RingProximal Right Z
+793: A Hand Bone Rot RingProximal Right X
+794: A Hand Bone Rot RingProximal Right Y
+795: A Hand Bone Rot RingProximal Right Z
+796: A Hand Bone Pos RingIntermediate Right X
+797: A Hand Bone Pos RingIntermediate Right Y
+798: A Hand Bone Pos RingIntermediate Right Z
+799: A Hand Bone Rot RingIntermediate Right X
+800: A Hand Bone Rot RingIntermediate Right Y
+801: A Hand Bone Rot RingIntermediate Right Z
+802: A Hand Bone Pos RingDistal Right X
+803: A Hand Bone Pos RingDistal Right Y
+804: A Hand Bone Pos RingDistal Right Z
+805: A Hand Bone Rot RingDistal Right X
+806: A Hand Bone Rot RingDistal Right Y
+807: A Hand Bone Rot RingDistal Right Z
+808: A Hand Bone Pos RingTip Right X
+809: A Hand Bone Pos RingTip Right Y
+810: A Hand Bone Pos RingTip Right Z
+811: A Hand Bone Rot RingTip Right X
+812: A Hand Bone Rot RingTip Right Y
+813: A Hand Bone Rot RingTip Right Z
+814: A Hand Bone Pos ThumbMetacarpal Right X
+815: A Hand Bone Pos ThumbMetacarpal Right Y
+816: A Hand Bone Pos ThumbMetacarpal Right Z
+817: A Hand Bone Rot ThumbMetacarpal Right X
+818: A Hand Bone Rot ThumbMetacarpal Right Y
+819: A Hand Bone Rot ThumbMetacarpal Right Z
+820: A Hand Bone Pos ThumbProximal Right X
+821: A Hand Bone Pos ThumbProximal Right Y
+822: A Hand Bone Pos ThumbProximal Right Z
+823: A Hand Bone Rot ThumbProximal Right X
+824: A Hand Bone Rot ThumbProximal Right Y
+825: A Hand Bone Rot ThumbProximal Right Z
+826: A Hand Bone Pos ThumbDistal Right X
+827: A Hand Bone Pos ThumbDistal Right Y
+828: A Hand Bone Pos ThumbDistal Right Z
+829: A Hand Bone Rot ThumbDistal Right X
+830: A Hand Bone Rot ThumbDistal Right Y
+831: A Hand Bone Rot ThumbDistal Right Z
+832: A Hand Bone Pos ThumbTip Right X
+833: A Hand Bone Pos ThumbTip Right Y
+834: A Hand Bone Pos ThumbTip Right Z
+835: A Hand Bone Rot ThumbTip Right X
+836: A Hand Bone Rot ThumbTip Right Y
+837: A Hand Bone Rot ThumbTip Right Z
+838: A Hand Bone Pos Palm Right X
+839: A Hand Bone Pos Palm Right Y
+840: A Hand Bone Pos Palm Right Z
+841: A Hand Bone Rot Palm Right X
+842: A Hand Bone Rot Palm Right Y
+843: A Hand Bone Rot Palm Right Z
+844: A Root Hand Pos Left X
+845: A Root Hand Pos Left Y
+846: A Root Hand Pos Left Z
+847: A Root Hand Rot Left X
+848: A Root Hand Rot Left Y
+849: A Root Hand Rot Left Z
+850: A Hand Bone Pos Wrist Left X
+851: A Hand Bone Pos Wrist Left Y
+852: A Hand Bone Pos Wrist Left Z
+853: A Hand Bone Rot Wrist Left X
+854: A Hand Bone Rot Wrist Left Y
+855: A Hand Bone Rot Wrist Left Z
+856: A Hand Bone Pos IndexMetacarpal Left X
+857: A Hand Bone Pos IndexMetacarpal Left Y
+858: A Hand Bone Pos IndexMetacarpal Left Z
+859: A Hand Bone Rot IndexMetacarpal Left X
+860: A Hand Bone Rot IndexMetacarpal Left Y
+861: A Hand Bone Rot IndexMetacarpal Left Z
+862: A Hand Bone Pos IndexProximal Left X
+863: A Hand Bone Pos IndexProximal Left Y
+864: A Hand Bone Pos IndexProximal Left Z
+865: A Hand Bone Rot IndexProximal Left X
+866: A Hand Bone Rot IndexProximal Left Y
+867: A Hand Bone Rot IndexProximal Left Z
+868: A Hand Bone Pos IndexIntermediate Left X
+869: A Hand Bone Pos IndexIntermediate Left Y
+870: A Hand Bone Pos IndexIntermediate Left Z
+871: A Hand Bone Rot IndexIntermediate Left X
+872: A Hand Bone Rot IndexIntermediate Left Y
+873: A Hand Bone Rot IndexIntermediate Left Z
+874: A Hand Bone Pos IndexDistal Left X
+875: A Hand Bone Pos IndexDistal Left Y
+876: A Hand Bone Pos IndexDistal Left Z
+877: A Hand Bone Rot IndexDistal Left X
+878: A Hand Bone Rot IndexDistal Left Y
+879: A Hand Bone Rot IndexDistal Left Z
+880: A Hand Bone Pos IndexTip Left X
+881: A Hand Bone Pos IndexTip Left Y
+882: A Hand Bone Pos IndexTip Left Z
+883: A Hand Bone Rot IndexTip Left X
+884: A Hand Bone Rot IndexTip Left Y
+885: A Hand Bone Rot IndexTip Left Z
+886: A Hand Bone Pos LittleMetacarpal Left X
+887: A Hand Bone Pos LittleMetacarpal Left Y
+888: A Hand Bone Pos LittleMetacarpal Left Z
+889: A Hand Bone Rot LittleMetacarpal Left X
+890: A Hand Bone Rot LittleMetacarpal Left Y
+891: A Hand Bone Rot LittleMetacarpal Left Z
+892: A Hand Bone Pos LittleProximal Left X
+893: A Hand Bone Pos LittleProximal Left Y
+894: A Hand Bone Pos LittleProximal Left Z
+895: A Hand Bone Rot LittleProximal Left X
+896: A Hand Bone Rot LittleProximal Left Y
+897: A Hand Bone Rot LittleProximal Left Z
+898: A Hand Bone Pos LittleIntermediate Left X
+899: A Hand Bone Pos LittleIntermediate Left Y
+900: A Hand Bone Pos LittleIntermediate Left Z
+901: A Hand Bone Rot LittleIntermediate Left X
+902: A Hand Bone Rot LittleIntermediate Left Y
+903: A Hand Bone Rot LittleIntermediate Left Z
+904: A Hand Bone Pos LittleDistal Left X
+905: A Hand Bone Pos LittleDistal Left Y
+906: A Hand Bone Pos LittleDistal Left Z
+907: A Hand Bone Rot LittleDistal Left X
+908: A Hand Bone Rot LittleDistal Left Y
+909: A Hand Bone Rot LittleDistal Left Z
+910: A Hand Bone Pos LittleTip Left X
+911: A Hand Bone Pos LittleTip Left Y
+912: A Hand Bone Pos LittleTip Left Z
+913: A Hand Bone Rot LittleTip Left X
+914: A Hand Bone Rot LittleTip Left Y
+915: A Hand Bone Rot LittleTip Left Z
+916: A Hand Bone Pos MiddleMetacarpal Left X
+917: A Hand Bone Pos MiddleMetacarpal Left Y
+918: A Hand Bone Pos MiddleMetacarpal Left Z
+919: A Hand Bone Rot MiddleMetacarpal Left X
+920: A Hand Bone Rot MiddleMetacarpal Left Y
+921: A Hand Bone Rot MiddleMetacarpal Left Z
+922: A Hand Bone Pos MiddleProximal Left X
+923: A Hand Bone Pos MiddleProximal Left Y
+924: A Hand Bone Pos MiddleProximal Left Z
+925: A Hand Bone Rot MiddleProximal Left X
+926: A Hand Bone Rot MiddleProximal Left Y
+927: A Hand Bone Rot MiddleProximal Left Z
+928: A Hand Bone Pos MiddleIntermediate Left X
+929: A Hand Bone Pos MiddleIntermediate Left Y
+930: A Hand Bone Pos MiddleIntermediate Left Z
+931: A Hand Bone Rot MiddleIntermediate Left X
+932: A Hand Bone Rot MiddleIntermediate Left Y
+933: A Hand Bone Rot MiddleIntermediate Left Z
+934: A Hand Bone Pos MiddleDistal Left X
+935: A Hand Bone Pos MiddleDistal Left Y
+936: A Hand Bone Pos MiddleDistal Left Z
+937: A Hand Bone Rot MiddleDistal Left X
+938: A Hand Bone Rot MiddleDistal Left Y
+939: A Hand Bone Rot MiddleDistal Left Z
+940: A Hand Bone Pos MiddleTip Left X
+941: A Hand Bone Pos MiddleTip Left Y
+942: A Hand Bone Pos MiddleTip Left Z
+943: A Hand Bone Rot MiddleTip Left X
+944: A Hand Bone Rot MiddleTip Left Y
+945: A Hand Bone Rot MiddleTip Left Z
+946: A Hand Bone Pos RingMetacarpal Left X
+947: A Hand Bone Pos RingMetacarpal Left Y
+948: A Hand Bone Pos RingMetacarpal Left Z
+949: A Hand Bone Rot RingMetacarpal Left X
+950: A Hand Bone Rot RingMetacarpal Left Y
+951: A Hand Bone Rot RingMetacarpal Left Z
+952: A Hand Bone Pos RingProximal Left X
+953: A Hand Bone Pos RingProximal Left Y
+954: A Hand Bone Pos RingProximal Left Z
+955: A Hand Bone Rot RingProximal Left X
+956: A Hand Bone Rot RingProximal Left Y
+957: A Hand Bone Rot RingProximal Left Z
+958: A Hand Bone Pos RingIntermediate Left X
+959: A Hand Bone Pos RingIntermediate Left Y
+960: A Hand Bone Pos RingIntermediate Left Z
+961: A Hand Bone Rot RingIntermediate Left X
+962: A Hand Bone Rot RingIntermediate Left Y
+963: A Hand Bone Rot RingIntermediate Left Z
+964: A Hand Bone Pos RingDistal Left X
+965: A Hand Bone Pos RingDistal Left Y
+966: A Hand Bone Pos RingDistal Left Z
+967: A Hand Bone Rot RingDistal Left X
+968: A Hand Bone Rot RingDistal Left Y
+969: A Hand Bone Rot RingDistal Left Z
+970: A Hand Bone Pos RingTip Left X
+971: A Hand Bone Pos RingTip Left Y
+972: A Hand Bone Pos RingTip Left Z
+973: A Hand Bone Rot RingTip Left X
+974: A Hand Bone Rot RingTip Left Y
+975: A Hand Bone Rot RingTip Left Z
+976: A Hand Bone Pos ThumbMetacarpal Left X
+977: A Hand Bone Pos ThumbMetacarpal Left Y
+978: A Hand Bone Pos ThumbMetacarpal Left Z
+979: A Hand Bone Rot ThumbMetacarpal Left X
+980: A Hand Bone Rot ThumbMetacarpal Left Y
+981: A Hand Bone Rot ThumbMetacarpal Left Z
+982: A Hand Bone Pos ThumbProximal Left X
+983: A Hand Bone Pos ThumbProximal Left Y
+984: A Hand Bone Pos ThumbProximal Left Z
+985: A Hand Bone Rot ThumbProximal Left X
+986: A Hand Bone Rot ThumbProximal Left Y
+987: A Hand Bone Rot ThumbProximal Left Z
+988: A Hand Bone Pos ThumbDistal Left X
+989: A Hand Bone Pos ThumbDistal Left Y
+990: A Hand Bone Pos ThumbDistal Left Z
+991: A Hand Bone Rot ThumbDistal Left X
+992: A Hand Bone Rot ThumbDistal Left Y
+993: A Hand Bone Rot ThumbDistal Left Z
+994: A Hand Bone Pos ThumbTip Left X
+995: A Hand Bone Pos ThumbTip Left Y
+996: A Hand Bone Pos ThumbTip Left Z
+997: A Hand Bone Rot ThumbTip Left X
+998: A Hand Bone Rot ThumbTip Left Y
+999: A Hand Bone Rot ThumbTip Left Z
+1000: A Hand Bone Pos Palm Left X
+1001: A Hand Bone Pos Palm Left Y
+1002: A Hand Bone Pos Palm Left Z
+1003: A Hand Bone Rot Palm Left X
+1004: A Hand Bone Rot Palm Left Y
+1005: A Hand Bone Rot Palm Left Z

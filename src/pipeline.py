@@ -11,7 +11,7 @@ from src.config import DatasetConfig, PipelineConfig
 from src.features import BehaviorClassifier, EventMerger, MetricsEngine, normalize_columns
 from src.preprocess import clean_metrics, load_scenario, validate_scenario
 from src.segmentation import MacroSegmenter, MicroSegmenter
-from src.visualization import plot_detected_events, plot_macro_segments, plot_micro_windows, plot_speed_profile
+from src.visualization import plot_behavior_gantt, plot_detected_events, plot_macro_segments, plot_micro_windows, plot_speed_profile
 
 
 class ScenarioPipeline:
@@ -48,12 +48,12 @@ class ScenarioPipeline:
             frame.to_csv(path, index=False)
             output_paths[name] = path
         if save_plots:
-            graph_dir = self.dataset_config.get_graphs_dir(pid)
-            prefix = f"scenario{scenario}"
-            output_paths["speed_plot"] = plot_speed_profile(metrics, graph_dir / f"{prefix}_speed.png")
-            output_paths["macro_plot"] = plot_macro_segments(metrics, macro_segments, graph_dir / f"{prefix}_macro.png")
-            output_paths["micro_plot"] = plot_micro_windows(metrics, micro_windows, graph_dir / f"{prefix}_micro.png")
-            output_paths["events_plot"] = plot_detected_events(metrics, events, graph_dir / f"{prefix}_events.png")
+            graph_dir = self.dataset_config.get_scenario_graphs_dir(pid, scenario)
+            output_paths["speed_plot"] = plot_speed_profile(metrics, graph_dir / "speed_profile.png")
+            output_paths["macro_plot"] = plot_macro_segments(metrics, macro_segments, graph_dir / "macro_segments.png")
+            output_paths["micro_plot"] = plot_micro_windows(metrics, micro_windows, graph_dir / "micro_windows.png")
+            output_paths["events_plot"] = plot_detected_events(metrics, events, graph_dir / "detected_events.png")
+            output_paths["gantt_plot"] = plot_behavior_gantt(classified, macro_segments, graph_dir / "behavior_gantt.png")
         return {
             "raw": raw,
             "cleaned": cleaned,
