@@ -5,8 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from src.config import DatasetConfig, PipelineConfig
-from src.pipeline import ScenarioPipeline
+from run_v6_batch import process_scenario
 
 
 def parse_args() -> argparse.Namespace:
@@ -14,7 +13,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-p", "--participant", type=int, required=True)
     parser.add_argument("-s", "--scenario", required=True)
-    parser.add_argument("--config", type=Path)
     parser.add_argument("--no-plots", action="store_true")
     return parser.parse_args()
 
@@ -23,11 +21,9 @@ def main() -> int:
     """Execute one scenario and print its saved outputs."""
     args = parse_args()
     root = Path(__file__).resolve().parent
-    config = PipelineConfig.from_yaml(args.config) if args.config else PipelineConfig()
-    result = ScenarioPipeline(DatasetConfig(root), config).process(args.participant, args.scenario, not args.no_plots)
-    print(f"Processed participant {args.participant}, scenario {args.scenario}")
-    for name, path in result["output_paths"].items():
-        print(f"{name}: {path}")
+    output_dir = process_scenario(root, args.participant, args.scenario, args.no_plots)
+    print(f"Processed exact-v6 participant {args.participant}, scenario {args.scenario}")
+    print(f"Outputs: {output_dir}")
     return 0
 
 

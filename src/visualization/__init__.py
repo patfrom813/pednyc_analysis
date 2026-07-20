@@ -1,6 +1,7 @@
 """Static pipeline visualization APIs."""
 
 from .plots import (
+    plot_behavior_gantt,
     plot_detected_events,
     plot_macro_segments,
     plot_micro_windows,
@@ -9,6 +10,7 @@ from .plots import (
 )
 
 __all__ = [
+    "plot_behavior_gantt",
     "plot_detected_events",
     "plot_macro_segments",
     "plot_micro_windows",

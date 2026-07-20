@@ -30,6 +30,7 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(dataset.discover_participants(), [2])
             self.assertEqual(dataset.discover_scenarios(2), ["3", "12", "Practice"])
             self.assertEqual(dataset.get_scenario_csv(2, "3").name, "CSV_Scenario-Ped-3_Session-x.csv")
+            self.assertEqual(dataset.get_scenario_graphs_dir(2, "3"), Path(temp).resolve() / "outputs" / "graphs" / "pednyc2" / "scenario3")
 
     def test_in_memory_pipeline_stages(self) -> None:
         time = np.arange(0.0, 8.0, 0.1)

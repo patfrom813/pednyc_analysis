@@ -6,8 +6,8 @@ import argparse
 import fnmatch
 from pathlib import Path
 
-from src.config import DatasetConfig, PipelineConfig
-from src.pipeline import ScenarioPipeline
+from run_v6_batch import process_scenario
+from src.config import DatasetConfig
 
 
 def parse_args() -> argparse.Namespace:
@@ -20,7 +20,6 @@ def parse_args() -> argparse.Namespace:
     selection.add_argument("--count", type=int)
     selection.add_argument("--pattern")
     selection.add_argument("--all", action="store_true")
-    parser.add_argument("--config", type=Path)
     parser.add_argument("--no-plots", action="store_true")
     return parser.parse_args()
 
@@ -51,13 +50,11 @@ def main() -> int:
         print("\n".join(available) if available else "No scenarios found")
         return 0
     selected = select_scenarios(available, args)
-    config = PipelineConfig.from_yaml(args.config) if args.config else PipelineConfig()
-    pipeline = ScenarioPipeline(dataset, config)
     failures = 0
     for scenario in selected:
         try:
-            pipeline.process(args.participant, scenario, not args.no_plots)
-            print(f"OK participant={args.participant} scenario={scenario}")
+            output_dir = process_scenario(root, args.participant, scenario, args.no_plots)
+            print(f"OK exact-v6 participant={args.participant} scenario={scenario} outputs={output_dir}")
         except Exception as exc:
             failures += 1
             print(f"FAIL participant={args.participant} scenario={scenario}: {exc}")
