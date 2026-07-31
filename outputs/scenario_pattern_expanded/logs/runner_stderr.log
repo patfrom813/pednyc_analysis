@@ -1,0 +1,2 @@
+C:\Users\patl5\OneDrive\Desktop\BURE\pednyc_analysis\src\scenario_pattern_expanded.py:218: UserWarning: Tight layout not applied. The left and right margins cannot be made large enough to accommodate all Axes decorations.
+  fig.tight_layout(); fig.savefig(root / "figures/micro_event_modal_sequences.png", dpi=180)

@@ -69,3 +69,58 @@ Render a single layout preview without invoking ffmpeg:
 ```powershell
 python src\segmentation\render_micro_gantt_mp4.py --preview-time 13.577
 ```
+
+## Interactive onset-aligned pedestrian-speed plots
+
+After the expanded scenario-pattern analysis has written
+`outputs/scenario_pattern_expanded/traces/aligned_speed_raw_traces.csv`, export
+the six standalone Plotly HTML files with:
+
+```powershell
+python src\visualization\interactive_onset_speed.py
+```
+
+The default outputs are written to `outputs/interactive_speed_plots`. Use
+`--scenarios 3 7`, `--coverage-threshold 0.5`, `--input PATH`, or
+`--output-dir PATH` to override the defaults. Individual recordings retain
+their full available onset-aligned durations. The pointwise group summary
+matches the static six-panel plot: median and 25th–75th percentile band after
+within-recording interpolation to a 0.1-second grid. It is suppressed wherever
+fewer than the requested fraction of the scenario's maximum contributors
+remain.
+
+## Pedestrian and vehicle trajectory analysis
+
+Run the raw coordinate audit first:
+
+```powershell
+python -m src.analysis.trajectory_analysis --phase raw
+```
+
+After reviewing `outputs/trajectory_analysis/coordinate_frame_summary.csv` and
+the six raw joint-trajectory HTML files, generate normalized-progress paths,
+mean paths, covariance regions, deviations, and recording-level metrics:
+
+```powershell
+python -m src.analysis.trajectory_analysis --phase full
+```
+
+Options include `--scenarios`, `--input`, `--output-dir`, and
+`--progress-points`. Normalized progress is a resampling axis, not normalized
+physical speed or distance. The interval begins at detected pedestrian
+movement onset and ends at the final subsequent sample at or above the
+existing 0.15 m/s movement threshold.
+
+## Pedestrian–vehicle conflict-zone analysis
+
+Run this only after the trajectory outputs have been generated and reviewed:
+
+```powershell
+python -m src.analysis.conflict_zone_analysis
+```
+
+Options include `--scenarios`, `--input`, `--output-dir`,
+`--conflict-zone-buffer`, and `--coverage-threshold`. The default estimated
+zone buffer is 2.0 m. Scenario-level JSON metadata reports whether the observed
+path geometry supports the estimated shared zone; unsupported zones are not
+silently interpreted as crossing conflicts.

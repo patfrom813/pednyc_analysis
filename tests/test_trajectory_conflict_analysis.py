@@ -1,0 +1,112 @@
+import math
+import unittest
+
+import numpy as np
+import pandas as pd
+
+from src.analysis.conflict_zone_analysis import (
+    entry_order,
+    occupancy_interval,
+    occupancy_overlap,
+    segment_intersection,
+    synchronized_distance,
+)
+from src.analysis.trajectory_analysis import (
+    deviation_frame,
+    interaction_interval,
+    interpolate_observed,
+    normalize_trajectories,
+    path_summary,
+)
+
+
+class TrajectoryAnalysisTests(unittest.TestCase):
+    def test_interpolation_never_extrapolates(self) -> None:
+        result = interpolate_observed(
+            np.array([20.0, 50.0, 80.0]),
+            np.array([2.0, 5.0, 8.0]),
+            np.array([0.0, 20.0, 50.0, 80.0, 100.0]),
+        )
+        self.assertTrue(np.isnan(result[0]))
+        self.assertTrue(np.isnan(result[-1]))
+        np.testing.assert_allclose(result[1:4], [2, 5, 8])
+
+    def test_normalization_preserves_real_duration(self) -> None:
+        traces = pd.DataFrame({
+            "participant_id": ["PedNYC1"] * 5,
+            "recording_identifier": ["r1"] * 5,
+            "scenario": [3] * 5,
+            "scenario_time": [0, 1, 2, 3, 4],
+            "aligned_time": [-1, 0, 1, 2, 3],
+            "ped_speed": [0, .3, .4, .2, 0],
+            "ped_x": [0, 0, 1, 2, 2],
+            "ped_z": [0, 0, 0, 0, 0],
+            "veh_x": [0, 1, 2, 3, 4],
+            "veh_z": [1, 1, 1, 1, 1],
+        })
+        self.assertEqual(interaction_interval(traces), (1.0, 3.0))
+        normalized, intervals = normalize_trajectories(traces, 11)
+        self.assertEqual(intervals.interaction_duration.iloc[0], 2.0)
+        self.assertEqual(normalized.progress_percent.min(), 0)
+        self.assertEqual(normalized.progress_percent.max(), 100)
+
+    def test_path_deviation_is_euclidean(self) -> None:
+        normalized = pd.DataFrame({
+            "participant_id": ["a", "b"],
+            "recording_identifier": ["a", "b"],
+            "scenario": [3, 3],
+            "progress_percent": [0, 0],
+            "ped_x": [0.0, 2.0],
+            "ped_z": [0.0, 0.0],
+            "veh_x": [0.0, 0.0],
+            "veh_z": [0.0, 0.0],
+        })
+        summary = path_summary(normalized, "ped")
+        deviation = deviation_frame(normalized, summary, "ped")
+        np.testing.assert_allclose(deviation.deviation_m, [1.0, 1.0])
+
+
+class ConflictAnalysisTests(unittest.TestCase):
+    def test_segment_intersection(self) -> None:
+        point = segment_intersection(
+            np.array([0.0, 0.0]), np.array([2.0, 0.0]),
+            np.array([1.0, -1.0]), np.array([1.0, 1.0]),
+        )
+        np.testing.assert_allclose(point, [1, 0])
+
+    def test_zone_entry_exit_and_order(self) -> None:
+        zone = {"center_x_m": 0.0, "center_z_m": 0.0, "radius_m": 1.0}
+        entry, exit_time = occupancy_interval(
+            np.arange(5.0), np.array([2, 1, 0, 1, 2]), np.zeros(5), zone
+        )
+        self.assertEqual((entry, exit_time), (1.0, 3.0))
+        self.assertEqual(entry_order(1.0, 2.0), ("pedestrian", 1.0))
+
+    def test_occupancy_overlap(self) -> None:
+        self.assertEqual(occupancy_overlap(1, 4, 3, 5), (True, 1.0))
+        self.assertEqual(occupancy_overlap(1, 2, 3, 4), (False, 0.0))
+
+    def test_distance_and_closing_rate(self) -> None:
+        frame = pd.DataFrame({
+            "scenario_time": [0.0, 1.0, 2.0],
+            "ped_x": [0.0, 0.0, 0.0], "ped_z": [0.0, 0.0, 0.0],
+            "veh_x": [3.0, 2.0, 1.0], "veh_z": [4.0, 0.0, 0.0],
+        })
+        result = synchronized_distance(frame)
+        np.testing.assert_allclose(result.distance_m, [5, 2, 1])
+        self.assertTrue((result.closing_rate_mps > 0).all())
+        self.assertTrue(result.ttc_seconds.notna().all())
+
+    def test_ttc_missing_during_separation(self) -> None:
+        frame = pd.DataFrame({
+            "scenario_time": [0.0, 1.0, 2.0],
+            "ped_x": [0.0, 0.0, 0.0], "ped_z": [0.0, 0.0, 0.0],
+            "veh_x": [1.0, 2.0, 3.0], "veh_z": [0.0, 0.0, 0.0],
+        })
+        result = synchronized_distance(frame)
+        self.assertTrue(result.ttc_seconds.isna().all())
+        self.assertTrue((result.approach_state == "separating").all())
+
+
+if __name__ == "__main__":
+    unittest.main()

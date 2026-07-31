@@ -1,0 +1,8 @@
+{
+  "exactly_five_participants": true,
+  "scenarios_in_range": true,
+  "manifest_final_status": true,
+  "no_duplicate_recordings": true,
+  "finite_success_durations": true,
+  "four_nonempty_figures": true
+}

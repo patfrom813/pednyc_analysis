@@ -1,0 +1,2 @@
+event_id,start_time,end_time,label,duration,confidence,pednyc_number,scenario_number
+0,0.0,22.350952,low_motion,22.350952,0.9,6,21

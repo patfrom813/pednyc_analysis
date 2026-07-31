@@ -1,0 +1,13 @@
+{
+  "scenario": 3,
+  "description": "Orthogonal approach \u2014 pedestrian near vehicle lane, same side",
+  "translation": {
+    "x_m": 0.0,
+    "z_m": 0.0
+  },
+  "rotation_degrees": 0.0,
+  "scale": 1.0,
+  "reflection": false,
+  "reason": "Raw diagnostics support a shared within-scenario Unity world frame.",
+  "distance_preservation_max_absolute_error_m": 0.0
+}

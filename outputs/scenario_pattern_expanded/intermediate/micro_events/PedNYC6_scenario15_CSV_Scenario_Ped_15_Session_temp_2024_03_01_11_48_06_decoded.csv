@@ -1,0 +1,6 @@
+event_id,start_time,end_time,label,duration,confidence,pednyc_number,scenario_number
+0,0.0,63.965088,low_motion,63.965088,0.9,6,15
+1,63.531006,64.460938,possible_hesitation,0.9299320000000009,0.82,6,15
+2,64.006836,64.965088,low_motion,0.9582519999999874,0.75,6,15
+3,64.520264,65.46167,deceleration,0.9414060000000006,0.8,6,15
+4,65.022705,96.42334,low_motion,31.400634999999994,0.9,6,15

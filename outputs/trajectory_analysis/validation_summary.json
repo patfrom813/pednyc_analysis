@@ -1,0 +1,56 @@
+{
+  "normalized_interval": "First smoothed pedestrian-speed sample >= 0.30 m/s through the final subsequent sample >= 0.15 m/s.",
+  "progress_grid": "0\u2013100% inclusive at 101 points",
+  "spatial_summary": "Pointwise arithmetic mean X/Z path.",
+  "variability": "Radial deviation quartiles plus one-standard-deviation X/Z covariance ellipses at 20% progress increments.",
+  "scenarios": [
+    {
+      "scenario": 3,
+      "recordings": 26,
+      "progress_points": 101,
+      "transform": "identity",
+      "duration_preserved": true,
+      "no_extrapolation": true
+    },
+    {
+      "scenario": 7,
+      "recordings": 23,
+      "progress_points": 101,
+      "transform": "identity",
+      "duration_preserved": true,
+      "no_extrapolation": true
+    },
+    {
+      "scenario": 12,
+      "recordings": 26,
+      "progress_points": 101,
+      "transform": "identity",
+      "duration_preserved": true,
+      "no_extrapolation": true
+    },
+    {
+      "scenario": 15,
+      "recordings": 28,
+      "progress_points": 101,
+      "transform": "identity",
+      "duration_preserved": true,
+      "no_extrapolation": true
+    },
+    {
+      "scenario": 16,
+      "recordings": 25,
+      "progress_points": 101,
+      "transform": "identity",
+      "duration_preserved": true,
+      "no_extrapolation": true
+    },
+    {
+      "scenario": 21,
+      "recordings": 27,
+      "progress_points": 101,
+      "transform": "identity",
+      "duration_preserved": true,
+      "no_extrapolation": true
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "no_concatenation": true,
+  "identifiers_attached": true,
+  "missing_values_preserved_or_absent": true,
+  "all_outputs_nonempty": true,
+  "six_scenarios": true,
+  "at_least_two_per_scenario": true
+}

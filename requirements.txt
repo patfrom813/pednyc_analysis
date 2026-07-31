@@ -2,3 +2,8 @@ matplotlib
 imageio-ffmpeg
 numpy
 pandas
+plotly
+scipy
+scikit-learn
+pytest
+PyYAML

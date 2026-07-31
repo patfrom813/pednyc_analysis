@@ -1,0 +1,18 @@
+feature,feature_group,included,missing_fraction,variance,reason
+median_pedestrian_speed,movement,True,0.0,0.048368861138599915,included
+peak_pedestrian_speed,movement,True,0.0,0.14629295209597235,included
+median_positive_acceleration,movement,True,0.0,0.0027140454827018845,included
+median_deceleration_magnitude,movement,True,0.0,0.0022625336325276693,included
+low_motion_proportion,movement,True,0.0,0.02608146751882714,included
+stop_start_count,movement,True,0.0,19.351906158357775,included
+recording_duration,movement,True,0.0,169.77674606880382,included
+head_rotation_event_count,head_movement,True,0.0,5.224801005446166,included
+median_absolute_head_rotation_rate,head_movement,True,0.0,87.73087924243274,included
+minimum_pedestrian_vehicle_distance,interaction,True,0.0,93.93350405142925,included
+vehicle_speed_at_movement_onset,interaction,True,0.0,6.621605683387615,included
+vehicle_deceleration_around_movement_onset,interaction,True,0.0,0.4342530586979272,included
+median_closing_speed,interaction,True,0.0,0.0017284912761090672,included
+total_low_motion_duration,movement,False,,,excluded as redundant with low_motion_proportion
+total_pause_duration,movement,False,,,excluded as redundant with low_motion_proportion
+pause_count,movement,False,,,excluded as redundant with stop_start_count
+peak_absolute_head_rotation_rate,head_movement,False,0.0,1187233.9877819566,excluded as redundant/outlier-sensitive counterpart of median rate

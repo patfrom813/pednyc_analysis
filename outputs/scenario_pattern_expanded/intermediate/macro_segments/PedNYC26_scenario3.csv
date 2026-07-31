@@ -1,0 +1,6 @@
+segment_id,start_time,end_time,phase_label,start_idx,end_idx,pednyc_number,scenario_number
+0,0.0,0.59436,low_motion,0,14,26,3
+1,0.59436,1.802734,acceleration,14,43,26,3
+2,1.802734,25.719727,crossing,43,617,26,3
+3,25.719727,39.928345,deceleration,617,958,26,3
+4,39.928345,41.808594,post_motion,958,1003,26,3

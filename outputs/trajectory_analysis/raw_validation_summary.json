@@ -1,0 +1,174 @@
+{
+  "phase": "raw_coordinate_diagnostics",
+  "scenarios": [
+    3,
+    7,
+    12,
+    15,
+    16,
+    21
+  ],
+  "requested_recordings": 155,
+  "successful_recordings": 155,
+  "failed_recordings": [],
+  "coordinate_columns": {
+    "time": "ScenarioTime normalized internally as time",
+    "pedestrian_x": "B VR Pos X (or decoded B VR Pos component 0)",
+    "pedestrian_z": "B VR Pos Z (or decoded B VR Pos component 2)",
+    "vehicle_x": "A car Pos X (or decoded A car Pos component 0)",
+    "vehicle_z": "A car Pos Z (or decoded A car Pos component 2)",
+    "pedestrian_speed": "ped_speed: 9-sample centered rolling mean",
+    "vehicle_speed": "veh_speed: 9-sample centered rolling mean",
+    "movement_onset": "first ped_speed >= 0.30 m/s; scenario-start fallback"
+  },
+  "transformations": [],
+  "unit_statement": "The existing pipeline treats Unity X/Z world-coordinate differences as meters. No independent calibration artifact was found in the repository.",
+  "frame_summary": [
+    {
+      "scenario": 3,
+      "description": "Orthogonal approach \u2014 pedestrian near vehicle lane, same side",
+      "recordings": 26,
+      "ped_start_x_range": 0.4656038284301758,
+      "ped_start_z_range": 0.49343109130859375,
+      "veh_start_x_range": 0.00046539306640625,
+      "veh_start_z_range": 7.62939453125e-06,
+      "ped_direction_arc_deg": 7.830478352765933,
+      "veh_direction_arc_deg": 24.86954918022799,
+      "ped_displacement_median": 18.74192148610873,
+      "ped_displacement_iqr": 1.2162265778267027,
+      "veh_displacement_median": 83.40893999471302,
+      "veh_displacement_iqr": 1.6796252581909812,
+      "common_origin_supported": true
+    },
+    {
+      "scenario": 7,
+      "description": "Orthogonal approach \u2014 pedestrian near vehicle lane, opposite side",
+      "recordings": 23,
+      "ped_start_x_range": 0.3817610740661621,
+      "ped_start_z_range": 0.5996322631835938,
+      "veh_start_x_range": 6.103515625e-05,
+      "veh_start_z_range": 7.62939453125e-06,
+      "ped_direction_arc_deg": 5.555695070840327,
+      "veh_direction_arc_deg": 0.7498889295934583,
+      "ped_displacement_median": 18.40314207585081,
+      "ped_displacement_iqr": 1.0623857608641494,
+      "veh_displacement_median": 110.4796870314286,
+      "veh_displacement_iqr": 4.680012490095947,
+      "common_origin_supported": true
+    },
+    {
+      "scenario": 12,
+      "description": "Orthogonal approach \u2014 pedestrian far from vehicle lane, opposite side",
+      "recordings": 26,
+      "ped_start_x_range": 0.23133373260498047,
+      "ped_start_z_range": 0.3979949951171875,
+      "veh_start_x_range": 0.000274658203125,
+      "veh_start_z_range": 7.62939453125e-06,
+      "ped_direction_arc_deg": 14.510073475772073,
+      "veh_direction_arc_deg": 22.33331468081362,
+      "ped_displacement_median": 15.421871414071223,
+      "ped_displacement_iqr": 2.7340231427943653,
+      "veh_displacement_median": 83.93087454430929,
+      "veh_displacement_iqr": 1.4175653165396938,
+      "common_origin_supported": true
+    },
+    {
+      "scenario": 15,
+      "description": "Parallel/contra-directional approach \u2014 pedestrian near vehicle lane, opposite side",
+      "recordings": 28,
+      "ped_start_x_range": 0.49753499031066895,
+      "ped_start_z_range": 0.9510345458984304,
+      "veh_start_x_range": 0.000194549560546875,
+      "veh_start_z_range": 7.629394545460855e-06,
+      "ped_direction_arc_deg": 218.81772048269352,
+      "veh_direction_arc_deg": 123.14579917468362,
+      "ped_displacement_median": 16.522032536787822,
+      "ped_displacement_iqr": 0.7405053104412502,
+      "veh_displacement_median": 63.005393827805534,
+      "veh_displacement_iqr": 2.9642962726251056,
+      "common_origin_supported": true
+    },
+    {
+      "scenario": 16,
+      "description": "Parallel/contra-directional approach \u2014 pedestrian far from vehicle lane, opposite side",
+      "recordings": 25,
+      "ped_start_x_range": 0.35816001892089844,
+      "ped_start_z_range": 0.6712265014648438,
+      "veh_start_x_range": 0.00010347366333007812,
+      "veh_start_z_range": 0.0,
+      "ped_direction_arc_deg": 85.89055754899614,
+      "veh_direction_arc_deg": 78.67206217928502,
+      "ped_displacement_median": 9.662087542703512,
+      "ped_displacement_iqr": 5.312214640354582,
+      "veh_displacement_median": 88.20477492028807,
+      "veh_displacement_iqr": 7.037306630029789,
+      "common_origin_supported": true
+    },
+    {
+      "scenario": 21,
+      "description": "Parallel/contra-directional approach \u2014 pedestrian near vehicle lane, same side",
+      "recordings": 27,
+      "ped_start_x_range": 0.2998981475830078,
+      "ped_start_z_range": 0.27765655517578125,
+      "veh_start_x_range": 0.00016021728515625,
+      "veh_start_z_range": 1.525878903407829e-05,
+      "ped_direction_arc_deg": 64.81912400411471,
+      "veh_direction_arc_deg": 113.23554291739234,
+      "ped_displacement_median": 18.608770319530223,
+      "ped_displacement_iqr": 0.817223568443854,
+      "veh_displacement_median": 61.78709558544894,
+      "veh_displacement_iqr": 1.459444657354581,
+      "common_origin_supported": true
+    }
+  ],
+  "preexisting_failed_or_excluded_recordings": [
+    {
+      "recording_identifier": "PedNYC8_scenario21",
+      "scenario_number": 21,
+      "processing_status": "failed",
+      "failure_exclusion_reason": "ValueError: validation failed: {'valid': False, 'row_count': 905, 'column_count': 3, 'missing_required': ['time', 'ped_x', 'ped_z', 'veh_x', 'veh_z'], 'empty_required': [], 'duplicate_columns': []}"
+    },
+    {
+      "recording_identifier": "PedNYC10_scenario12",
+      "scenario_number": 12,
+      "processing_status": "failed",
+      "failure_exclusion_reason": "ValueError: validation failed: {'valid': False, 'row_count': 665, 'column_count': 3, 'missing_required': ['time', 'ped_x', 'ped_z', 'veh_x', 'veh_z'], 'empty_required': [], 'duplicate_columns': []}"
+    },
+    {
+      "recording_identifier": "PedNYC10_scenario21",
+      "scenario_number": 21,
+      "processing_status": "failed",
+      "failure_exclusion_reason": "ValueError: validation failed: {'valid': False, 'row_count': 967, 'column_count': 3, 'missing_required': ['time', 'ped_x', 'ped_z', 'veh_x', 'veh_z'], 'empty_required': [], 'duplicate_columns': []}"
+    },
+    {
+      "recording_identifier": "PedNYC16_scenario7",
+      "scenario_number": 7,
+      "processing_status": "failed",
+      "failure_exclusion_reason": "ValueError: validation failed: {'valid': False, 'row_count': 867, 'column_count': 3, 'missing_required': ['time', 'ped_x', 'ped_z', 'veh_x', 'veh_z'], 'empty_required': [], 'duplicate_columns': []}"
+    },
+    {
+      "recording_identifier": "PedNYC17_scenario12",
+      "scenario_number": 12,
+      "processing_status": "failed",
+      "failure_exclusion_reason": "ValueError: validation failed: {'valid': False, 'row_count': 771, 'column_count': 3, 'missing_required': ['time', 'ped_x', 'ped_z', 'veh_x', 'veh_z'], 'empty_required': [], 'duplicate_columns': []}"
+    },
+    {
+      "recording_identifier": "PedNYC21_scenario21",
+      "scenario_number": 21,
+      "processing_status": "failed",
+      "failure_exclusion_reason": "Excluded: smoothed pedestrian speed exceeds configured 8 m/s spike threshold"
+    },
+    {
+      "recording_identifier": "PedNYC24_scenario7",
+      "scenario_number": 7,
+      "processing_status": "failed",
+      "failure_exclusion_reason": "ValueError: validation failed: {'valid': False, 'row_count': 897, 'column_count': 3, 'missing_required': ['time', 'ped_x', 'ped_z', 'veh_x', 'veh_z'], 'empty_required': [], 'duplicate_columns': []}"
+    },
+    {
+      "recording_identifier": "PedNYC29_scenario16",
+      "scenario_number": 16,
+      "processing_status": "failed",
+      "failure_exclusion_reason": "Excluded: smoothed pedestrian speed exceeds configured 8 m/s spike threshold"
+    }
+  ]
+}

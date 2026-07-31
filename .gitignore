@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 .python_packages/
+.analysis_packages/
 outputs/processed/
 outputs/graphs/pednyc*/
 outputs/graphs/exact_v6/
